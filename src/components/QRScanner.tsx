@@ -21,11 +21,20 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       checkCameraPermission();
     }
 
+    // Prevent body scroll when scanner is open
+    if (isOpen) {
+      document.body.classList.add('qr-scanner-open');
+    } else {
+      document.body.classList.remove('qr-scanner-open');
+    }
+
     return () => {
       if (scannerRef.current) {
         scannerRef.current.clear().catch(console.error);
         scannerRef.current = null;
       }
+      // Restore body scroll
+      document.body.classList.remove('qr-scanner-open');
     };
   }, [isOpen]);
 
@@ -76,17 +85,32 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       console.log('Initializing QR scanner with back camera preference...');
 
       const config: Html5QrcodeScannerConfig = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
+        fps: 15, // Tăng FPS để responsive hơn
+        qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+          // Dynamic QR box size based on screen
+          const minEdgePercentage = 0.7; // 70% of the smaller dimension
+          const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+          const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+          return {
+            width: qrboxSize,
+            height: qrboxSize,
+          };
+        },
         aspectRatio: 1.0,
         supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        showTorchButtonIfSupported: false, // Ẩn torch button mặc định
+        showTorchButtonIfSupported: false,
         showZoomSliderIfSupported: false,
         defaultZoomValueIfSupported: 1,
         rememberLastUsedCamera: true,
-        // Prefer back camera
+        // Prefer back camera with better constraints
         videoConstraints: {
-          facingMode: { ideal: "environment" }
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        // Performance optimizations
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
         }
       };
 
@@ -104,41 +128,55 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           handleClose();
         },
         (errorMessage) => {
-          // Ignore frequent scan errors
+          // Ignore frequent scan errors to reduce console noise
           if (!errorMessage.includes('No QR code found') &&
               !errorMessage.includes('NotFoundException') &&
-              !errorMessage.includes('No MultiFormat Readers')) {
+              !errorMessage.includes('No MultiFormat Readers') &&
+              !errorMessage.includes('QR code parse error')) {
             console.warn('QR scan error:', errorMessage);
           }
         }
       );
 
-      // Ẩn UI mặc định của thư viện sau khi render
-      setTimeout(() => {
+      // Ẩn UI mặc định của thư viện với multiple attempts
+      const hideUIElements = () => {
         const container = document.getElementById('qr-scanner-container');
         if (container) {
-          // Ẩn select camera dropdown và stop button
-          const selectElements = container.querySelectorAll('select');
-          const buttonElements = container.querySelectorAll('button');
-          const spanElements = container.querySelectorAll('span');
+          // Ẩn tất cả elements không cần thiết
+          const selectElements = container.querySelectorAll('select, [id*="select"], [class*="select"]');
+          const buttonElements = container.querySelectorAll('button, [id*="button"], [class*="button"]');
+          const spanElements = container.querySelectorAll('span, div');
 
           selectElements.forEach(el => {
-            (el as HTMLElement).style.display = 'none';
+            (el as HTMLElement).style.display = 'none !important';
+            (el as HTMLElement).style.visibility = 'hidden !important';
           });
 
           buttonElements.forEach(el => {
-            if (el.textContent?.includes('Stop') || el.textContent?.includes('Camera')) {
-              (el as HTMLElement).style.display = 'none';
+            const text = el.textContent?.toLowerCase() || '';
+            if (text.includes('stop') || text.includes('camera') || text.includes('select')) {
+              (el as HTMLElement).style.display = 'none !important';
+              (el as HTMLElement).style.visibility = 'hidden !important';
             }
           });
 
           spanElements.forEach(el => {
-            if (el.textContent?.includes('Select Camera') || el.textContent?.includes('Stop')) {
-              (el as HTMLElement).style.display = 'none';
+            const text = el.textContent?.toLowerCase() || '';
+            if (text.includes('select camera') ||
+                text.includes('stop') ||
+                text.includes('camera permission') ||
+                text.includes('requesting')) {
+              (el as HTMLElement).style.display = 'none !important';
+              (el as HTMLElement).style.visibility = 'hidden !important';
             }
           });
         }
-      }, 1000);
+      };
+
+      // Multiple attempts để đảm bảo ẩn được UI
+      setTimeout(hideUIElements, 300);
+      setTimeout(hideUIElements, 800);
+      setTimeout(hideUIElements, 1500);
 
       setIsScanning(true);
     } catch (err: any) {
@@ -210,37 +248,63 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
   return (
     <>
-      {/* Global CSS để ẩn UI mặc định của Html5QrcodeScanner */}
+      {/* Global CSS để ẩn UI mặc định và optimize performance */}
       <style>{`
+        /* Hide all default UI elements */
         #qr-scanner-container select,
         #qr-scanner-container button[id*="html5-qrcode"],
         #qr-scanner-container span[id*="html5-qrcode"],
         #qr-scanner-container div[id*="html5-qrcode-select"],
         #qr-scanner-container div[id*="html5-qrcode-button"],
-        .html5-qrcode-element {
+        .html5-qrcode-element,
+        #qr-scanner-container *[id*="html5-qrcode"]:not(video) {
           display: none !important;
+          visibility: hidden !important;
         }
 
+        /* Optimize video performance */
         #qr-scanner-container video {
-          border-radius: 1rem !important;
+          border-radius: 0.75rem !important;
           width: 100% !important;
-          height: auto !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          transform: translateZ(0) !important;
+          backface-visibility: hidden !important;
+          -webkit-backface-visibility: hidden !important;
+        }
+
+        /* Safe area support */
+        .safe-area-top {
+          padding-top: max(env(safe-area-inset-top), 0.75rem);
+        }
+
+        .safe-area-bottom {
+          padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+        }
+
+        /* Prevent scrolling and improve touch */
+        body.qr-scanner-open {
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
+          touch-action: none !important;
         }
       `}</style>
 
-      <div className="fixed inset-0 bg-black/95 z-50 flex flex-col">
+      <div className="fixed inset-0 bg-black/95 z-50 flex flex-col" style={{ touchAction: 'none' }}>
         <div className="flex-1 bg-gradient-to-br from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-md border-white/10 shadow-2xl overflow-hidden">
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-black/20">
+        {/* Mobile Header - Optimized */}
+        <div className="flex items-center justify-between p-3 sm:p-6 border-b border-white/10 bg-black/30 safe-area-top">
           <div className="flex items-center">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3">
-              <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+            <div className="w-7 h-7 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+              <Camera className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-white" />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold text-white">Quét QR Code</h3>
+            <h3 className="text-base sm:text-xl font-bold text-white">Quét QR Code</h3>
           </div>
           <button
             onClick={handleClose}
-            className="p-3 hover:bg-white/10 rounded-xl transition-all duration-200 active:scale-95 touch-manipulation"
+            className="p-2 sm:p-3 hover:bg-white/10 rounded-xl transition-all duration-200 active:scale-95 touch-manipulation"
           >
             <X className="h-6 w-6 text-white" />
           </button>
@@ -286,9 +350,9 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
                 <button
                   onClick={() => setShowManualInput(true)}
-                  className="w-full bg-white/10 active:bg-white/20 text-white px-6 py-4 sm:px-8 sm:py-4 rounded-xl font-semibold transition-all duration-200 border border-white/20 active:scale-95 touch-manipulation text-base sm:text-lg"
+                  className="w-full bg-white/10 active:bg-white/20 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-semibold transition-all duration-200 border border-white/20 active:scale-95 touch-manipulation text-sm sm:text-lg"
                 >
-                  ⌨️ Nhập mã QR thủ công
+                  ⌨️ Nhập 6 số thủ công
                 </button>
 
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-left">
@@ -304,22 +368,27 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           )}
 
           {showManualInput && (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white text-xl">⌨️</span>
+            <div className="text-center py-4 sm:py-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <span className="text-white text-lg sm:text-xl">⌨️</span>
               </div>
-              <h4 className="text-xl font-bold text-white mb-6">Nhập mã QR thủ công</h4>
-              <div className="space-y-4">
+              <h4 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Nhập mã thủ công</h4>
+              <div className="space-y-3 sm:space-y-4">
                 <div className="relative">
-                  <textarea
+                  <input
+                    type="text"
                     value={manualInput}
                     onChange={(e) => setManualInput(e.target.value)}
-                    placeholder="Nhập 6 số hoặc dán nội dung QR code..."
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none backdrop-blur-sm text-center text-lg font-mono"
-                    rows={3}
+                    placeholder="Nhập 6 số..."
+                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 sm:py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm text-center text-xl sm:text-2xl font-mono tracking-widest"
+                    maxLength={6}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    autoFocus
                   />
-                  <div className="absolute top-2 right-2">
-                    <span className="text-xs text-white/40">6 số hoặc QR data</span>
+                  <div className="absolute top-2 right-3">
+                    <span className="text-xs text-white/40">6 số</span>
                   </div>
                 </div>
                 <div className="flex space-x-3">
@@ -355,29 +424,20 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                 </div>
               )}
 
-              {/* QR Scanner Container - Mobile Optimized */}
-              <div className="relative flex-1 min-h-0">
+              {/* QR Scanner Container - Performance Optimized */}
+              <div className="relative flex-1 min-h-0 max-h-[60vh] sm:max-h-[70vh]">
                 <div
                   id="qr-scanner-container"
-                  className="w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border border-white/20 shadow-2xl qr-scanner-custom"
-                  style={{ minHeight: '280px' }}
+                  className="w-full h-full rounded-lg sm:rounded-2xl overflow-hidden border border-white/20 shadow-2xl qr-scanner-custom bg-black/50"
+                  style={{
+                    minHeight: '250px',
+                    maxHeight: '60vh',
+                    transform: 'translateZ(0)', // Hardware acceleration
+                    willChange: 'transform' // Optimize for animations
+                  }}
                 />
 
-                {/* Custom CSS để ẩn UI mặc định */}
-                <style jsx>{`
-                  .qr-scanner-custom :global(#html5-qrcode-select-camera),
-                  .qr-scanner-custom :global(#html5-qrcode-button-camera-stop),
-                  .qr-scanner-custom :global(.html5-qrcode-element),
-                  .qr-scanner-custom :global([id*="html5-qrcode-select"]),
-                  .qr-scanner-custom :global([id*="html5-qrcode-button"]) {
-                    display: none !important;
-                  }
 
-                  .qr-scanner-custom :global(video) {
-                    border-radius: 0.75rem;
-                    object-fit: cover;
-                  }
-                `}</style>
 
                 {/* Mobile Scanning overlay */}
                 <div className="absolute inset-0 pointer-events-none">
@@ -402,27 +462,27 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                 </div>
               )}
 
-              {/* Manual input option */}
+              {/* Manual input option - Mobile optimized */}
               <div className="text-center">
                 <button
                   onClick={() => setShowManualInput(true)}
-                  className="text-white/60 hover:text-white text-sm underline transition-colors"
+                  className="text-white/70 hover:text-white text-sm sm:text-base underline transition-colors touch-manipulation py-2"
                 >
-                  Không quét được? Nhập thủ công →
+                  Không quét được? Nhập 6 số →
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-white/10 bg-gradient-to-r from-purple-900/50 to-blue-900/50">
-          <div className="text-center space-y-2">
+        {/* Footer - Compact on mobile */}
+        <div className="p-3 sm:p-6 border-t border-white/10 bg-gradient-to-r from-purple-900/50 to-blue-900/50 safe-area-bottom">
+          <div className="text-center space-y-1 sm:space-y-2">
             <div className="flex items-center justify-center space-x-2">
-              <span className="text-2xl">💡</span>
-              <p className="text-white/80 font-medium">Mẹo quét QR hiệu quả</p>
+              <span className="text-lg sm:text-2xl">💡</span>
+              <p className="text-white/80 font-medium text-sm sm:text-base">Mẹo quét QR hiệu quả</p>
             </div>
-            <div className="text-white/60 text-sm space-y-1">
+            <div className="text-white/60 text-xs sm:text-sm space-y-0.5 sm:space-y-1">
               <p>• Giữ camera ổn định và đảm bảo ánh sáng đủ</p>
               <p>• Đưa QR code vào giữa khung hình</p>
               <p>• Khoảng cách 10-30cm là tối ưu</p>
