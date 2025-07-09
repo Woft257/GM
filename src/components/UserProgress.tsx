@@ -19,23 +19,23 @@ const UserProgress: React.FC<UserProgressProps> = ({ user }) => {
   const completionRate = (completedBooths.length / booths.length) * 100;
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div className="flex items-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-4">
-            <User className="h-6 w-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3 sm:mr-4">
+            <User className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">{user.telegram}</h3>
-            <p className="text-white/70">Tiến trình cá nhân</p>
+            <h3 className="text-lg sm:text-xl font-bold text-white">{user.telegram}</h3>
+            <p className="text-white/70 text-sm sm:text-base">Tiến trình cá nhân</p>
           </div>
         </div>
         <div className="text-right">
           <div className="flex items-center">
-            <Star className="h-5 w-5 text-yellow-500 mr-1" />
-            <span className="text-2xl font-bold text-white">{user.totalScore}</span>
+            <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 mr-1" />
+            <span className="text-xl sm:text-2xl font-bold text-white">{user.totalScore}</span>
           </div>
-          <p className="text-white/60 text-sm">điểm</p>
+          <p className="text-white/60 text-xs sm:text-sm">điểm</p>
         </div>
       </div>
 

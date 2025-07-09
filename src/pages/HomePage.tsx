@@ -96,25 +96,42 @@ const HomePage: React.FC = () => {
 
   return (
     <Layout title="Dashboard">
-      {/* QR Scan Button */}
-      <div className="text-center mb-8">
+      {/* Mobile QR Scan Button */}
+      <div className="text-center mb-6 sm:mb-8">
         <button
           onClick={() => setShowQRScanner(true)}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 flex items-center mx-auto"
+          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 sm:px-8 sm:py-4 rounded-2xl font-semibold active:from-purple-600 active:to-pink-600 transition-all duration-200 active:scale-95 flex items-center mx-auto shadow-lg touch-manipulation text-lg sm:text-xl"
         >
-          <QrCode className="h-6 w-6 mr-3" />
+          <QrCode className="h-6 w-6 sm:h-7 sm:w-7 mr-3" />
           Quét QR Code
         </button>
-        <p className="text-white/60 text-sm mt-2">
+        <p className="text-white/60 text-sm sm:text-base mt-3">
           Quét QR code tại các booth để nhận điểm
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
+      {/* Mobile-First Layout */}
+      <div className="space-y-6 sm:space-y-8">
+        {/* User Progress - Mobile First */}
+        <div className="sm:hidden">
+          {user && !userLoading && <UserProgress user={user} />}
+          {userLoading && (
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto mb-3"></div>
+                <p className="text-white/70 text-sm">Đang tải tiến trình...</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Leaderboard */}
+        <div>
           <Leaderboard users={users} currentUser={user} loading={usersLoading} />
         </div>
-        <div>
+
+        {/* User Progress - Desktop */}
+        <div className="hidden sm:block">
           {user && !userLoading && <UserProgress user={user} />}
           {userLoading && (
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">

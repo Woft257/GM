@@ -220,26 +220,26 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
         }
       `}</style>
 
-      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-gradient-to-br from-purple-900/90 via-blue-900/90 to-indigo-900/90 backdrop-blur-md rounded-3xl border border-white/20 w-full max-w-lg shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+      <div className="fixed inset-0 bg-black/95 z-50 flex flex-col">
+        <div className="flex-1 bg-gradient-to-br from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-md border-white/10 shadow-2xl overflow-hidden">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-black/20">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3">
-              <Camera className="h-5 w-5 text-white" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3">
+              <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-white">Quét QR Code</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-white">Quét QR Code</h3>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-white/10 rounded-xl transition-all duration-200 hover:scale-110"
+            className="p-3 hover:bg-white/10 rounded-xl transition-all duration-200 active:scale-95 touch-manipulation"
           >
             <X className="h-6 w-6 text-white" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
           {hasPermission === null && (
             <div className="text-center py-8">
               <div className="relative">
@@ -271,14 +271,14 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
               <div className="space-y-4">
                 <button
                   onClick={requestCameraPermission}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 active:from-blue-700 active:to-purple-700 text-white px-6 py-4 sm:px-8 sm:py-4 rounded-xl font-semibold transition-all duration-200 active:scale-95 shadow-lg touch-manipulation text-base sm:text-lg"
                 >
                   🎥 Cho phép truy cập camera
                 </button>
 
                 <button
                   onClick={() => setShowManualInput(true)}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 border border-white/20"
+                  className="w-full bg-white/10 active:bg-white/20 text-white px-6 py-4 sm:px-8 sm:py-4 rounded-xl font-semibold transition-all duration-200 border border-white/20 active:scale-95 touch-manipulation text-base sm:text-lg"
                 >
                   ⌨️ Nhập mã QR thủ công
                 </button>
@@ -347,12 +347,12 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                 </div>
               )}
 
-              {/* QR Scanner Container */}
-              <div className="relative">
+              {/* QR Scanner Container - Mobile Optimized */}
+              <div className="relative flex-1 min-h-0">
                 <div
                   id="qr-scanner-container"
-                  className="w-full rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl qr-scanner-custom"
-                  style={{ minHeight: '320px' }}
+                  className="w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border border-white/20 shadow-2xl qr-scanner-custom"
+                  style={{ minHeight: '280px' }}
                 />
 
                 {/* Custom CSS để ẩn UI mặc định */}
@@ -366,18 +366,24 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                   }
 
                   .qr-scanner-custom :global(video) {
-                    border-radius: 1rem;
+                    border-radius: 0.75rem;
+                    object-fit: cover;
                   }
                 `}</style>
 
-                {/* Scanning overlay */}
+                {/* Mobile Scanning overlay */}
                 <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute inset-4 border-2 border-white/30 rounded-xl">
-                    {/* Corner indicators */}
-                    <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-purple-400 rounded-tl-lg"></div>
-                    <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-purple-400 rounded-tr-lg"></div>
-                    <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-purple-400 rounded-bl-lg"></div>
-                    <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-purple-400 rounded-br-lg"></div>
+                  <div className="absolute inset-3 sm:inset-4 border-2 border-white/40 rounded-lg">
+                    {/* Corner indicators - Mobile optimized */}
+                    <div className="absolute top-0 left-0 w-4 h-4 sm:w-6 sm:h-6 border-t-3 border-l-3 sm:border-t-4 sm:border-l-4 border-purple-400 rounded-tl-lg"></div>
+                    <div className="absolute top-0 right-0 w-4 h-4 sm:w-6 sm:h-6 border-t-3 border-r-3 sm:border-t-4 sm:border-r-4 border-purple-400 rounded-tr-lg"></div>
+                    <div className="absolute bottom-0 left-0 w-4 h-4 sm:w-6 sm:h-6 border-b-3 border-l-3 sm:border-b-4 sm:border-l-4 border-purple-400 rounded-bl-lg"></div>
+                    <div className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 border-b-3 border-r-3 sm:border-b-4 sm:border-r-4 border-purple-400 rounded-br-lg"></div>
+                  </div>
+
+                  {/* Scanning line animation */}
+                  <div className="absolute inset-3 sm:inset-4 flex items-center justify-center">
+                    <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent animate-pulse"></div>
                   </div>
                 </div>
               </div>

@@ -47,10 +47,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-      <div className="flex items-center justify-center mb-6">
-        <Trophy className="h-6 w-6 text-yellow-500 mr-2" />
-        <h3 className="text-xl font-bold text-white">Bảng Xếp Hạng</h3>
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-6 border border-white/20">
+      <div className="flex items-center justify-center mb-4 sm:mb-6">
+        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 mr-2" />
+        <h3 className="text-lg sm:text-xl font-bold text-white">Bảng Xếp Hạng</h3>
       </div>
 
       <div className="space-y-3">
@@ -61,29 +61,29 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
           return (
             <div
               key={user.telegram}
-              className={`flex items-center justify-between p-4 rounded-xl transition-all duration-200 hover:scale-102 ${
-                isCurrentUser 
-                  ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30' 
-                  : 'bg-white/5 hover:bg-white/10'
+              className={`flex items-center justify-between p-3 sm:p-4 rounded-xl transition-all duration-200 active:scale-98 ${
+                isCurrentUser
+                  ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30'
+                  : 'bg-white/5 active:bg-white/10'
               }`}
             >
-              <div className="flex items-center space-x-4">
-                <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${getRankColor(rank)} flex items-center justify-center`}>
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r ${getRankColor(rank)} flex items-center justify-center`}>
                   {getRankIcon(rank)}
                 </div>
                 <div>
-                  <p className={`font-semibold ${isCurrentUser ? 'text-white' : 'text-white/90'}`}>
+                  <p className={`font-semibold text-sm sm:text-base ${isCurrentUser ? 'text-white' : 'text-white/90'}`}>
                     {user.telegram}
-                    {isCurrentUser && <span className="ml-2 text-purple-300 text-sm">(Bạn)</span>}
+                    {isCurrentUser && <span className="ml-2 text-purple-300 text-xs sm:text-sm">(Bạn)</span>}
                   </p>
-                  <p className="text-white/60 text-sm">
+                  <p className="text-white/60 text-xs sm:text-sm">
                     {Object.keys(user.playedBooths).length} booth đã chơi
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-white">{user.totalScore}</p>
-                <p className="text-white/60 text-sm">điểm</p>
+                <p className="text-lg sm:text-2xl font-bold text-white">{user.totalScore}</p>
+                <p className="text-white/60 text-xs sm:text-sm">điểm</p>
               </div>
             </div>
           );
