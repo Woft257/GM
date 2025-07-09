@@ -4,10 +4,10 @@ import { createQRToken } from './database';
 export const generateQRCodeData = async (
   boothId: string,
   points: number
-): Promise<{ qrCodeDataURL: string; tokenId: string; qrData: string }> => {
+): Promise<{ qrCodeDataURL: string; tokenId: string; qrData: string; simpleCode: string }> => {
   try {
     // Create token in database
-    const tokenId = await createQRToken(boothId, points);
+    const { tokenId, simpleCode } = await createQRToken(boothId, points);
 
     // Create embedded data for QR code (JSON format)
     const qrData = JSON.stringify({
@@ -15,7 +15,8 @@ export const generateQRCodeData = async (
       tokenId,
       boothId,
       points,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      simpleCode // Include simple code in QR data
     });
 
     // Generate QR code with embedded data
@@ -32,7 +33,8 @@ export const generateQRCodeData = async (
     return {
       qrCodeDataURL,
       tokenId,
-      qrData
+      qrData,
+      simpleCode
     };
   } catch (error) {
     console.error('Error generating QR code:', error);
@@ -73,10 +75,10 @@ export const parseQRData = (qrText: string): {
 export const validateQRData = (qrData: any): boolean => {
   if (!qrData) return false;
 
-  // Check if QR is not too old (24 hours)
+  // Check if QR is not too old (15 minutes)
   const now = Date.now();
   const qrAge = now - qrData.timestamp;
-  const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  const maxAge = 15 * 60 * 1000; // 15 minutes in milliseconds
 
   if (qrAge > maxAge) {
     return false;

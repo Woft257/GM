@@ -7,7 +7,7 @@ import QRScanner from '../components/QRScanner';
 import { useAuth } from '../hooks/useAuth';
 import { useUsers, useUser } from '../hooks/useUsers';
 import { parseQRData, validateQRData } from '../lib/qrcode';
-import { useQRToken } from '../lib/database';
+import { useQRToken, useQRTokenBySimpleCode } from '../lib/database';
 import { QrCode, CheckCircle, XCircle } from 'lucide-react';
 
 const HomePage: React.FC = () => {
@@ -45,6 +45,21 @@ const HomePage: React.FC = () => {
     }
 
     try {
+      // Check if it's a simple code
+      if (qrText.startsWith('SIMPLE_CODE:')) {
+        const simpleCode = qrText.replace('SIMPLE_CODE:', '');
+
+        // Use simple code
+        const points = await useQRTokenBySimpleCode(simpleCode, username);
+
+        setScanResult({
+          success: true,
+          message: `Chúc mừng! Bạn đã nhận được ${points} điểm bằng mã ${simpleCode}`,
+          points
+        });
+        return;
+      }
+
       // Parse QR data
       const qrData = parseQRData(qrText);
 

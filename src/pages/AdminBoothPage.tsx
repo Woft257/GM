@@ -13,6 +13,7 @@ const AdminBoothPage: React.FC = () => {
     qrCodeDataURL: string;
     tokenId: string;
     qrData: string;
+    simpleCode: string;
   } | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string>('');
@@ -195,20 +196,16 @@ const AdminBoothPage: React.FC = () => {
               </div>
 
               {/* QR Info */}
-              <div className="space-y-3">
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="text-white/60 text-sm">Điểm số</p>
-                  <p className="text-white font-semibold">{points} điểm</p>
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30 rounded-xl p-4">
+                  <p className="text-green-300 font-semibold mb-2">Điểm số</p>
+                  <p className="text-white text-2xl font-bold">{points} điểm</p>
                 </div>
-                
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="text-white/60 text-sm">Token ID</p>
-                  <p className="text-white font-mono text-xs break-all">{qrData.tokenId}</p>
-                </div>
-                
-                <div className="bg-white/5 rounded-lg p-3">
-                  <p className="text-white/60 text-sm">QR Data</p>
-                  <p className="text-white font-mono text-xs break-all">{qrData.qrData}</p>
+
+                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-4">
+                  <p className="text-purple-300 font-semibold mb-2">Code</p>
+                  <p className="text-white text-3xl font-mono font-bold tracking-wider">{qrData.simpleCode}</p>
+                  <p className="text-white/60 text-sm mt-2">Nhập 6 số này nếu không quét được QR</p>
                 </div>
               </div>
 
@@ -232,8 +229,8 @@ const AdminBoothPage: React.FC = () => {
               </div>
 
               <div className="text-center">
-                <p className="text-white/60 text-sm">
-                  ⚠️ QR code này chỉ sử dụng được 1 lần và có hiệu lực trong 24 giờ
+                <p className="text-yellow-400 text-sm font-semibold">
+                  ⏰ QR code này chỉ sử dụng được 1 lần và có hiệu lực trong 15 phút
                 </p>
               </div>
             </div>

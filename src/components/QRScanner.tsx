@@ -161,8 +161,16 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
   };
 
   const handleManualSubmit = () => {
-    if (manualInput.trim()) {
-      onScanSuccess(manualInput.trim());
+    const input = manualInput.trim();
+    if (input) {
+      // Check if it's a 6-digit code
+      if (/^\d{6}$/.test(input)) {
+        // Handle as simple code
+        onScanSuccess(`SIMPLE_CODE:${input}`);
+      } else {
+        // Handle as QR data
+        onScanSuccess(input);
+      }
       handleClose();
     }
   };
@@ -306,12 +314,12 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                   <textarea
                     value={manualInput}
                     onChange={(e) => setManualInput(e.target.value)}
-                    placeholder="Dán nội dung QR code vào đây..."
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none backdrop-blur-sm"
-                    rows={4}
+                    placeholder="Nhập 6 số hoặc dán nội dung QR code..."
+                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none backdrop-blur-sm text-center text-lg font-mono"
+                    rows={3}
                   />
                   <div className="absolute top-2 right-2">
-                    <span className="text-xs text-white/40">Ctrl+V để dán</span>
+                    <span className="text-xs text-white/40">6 số hoặc QR data</span>
                   </div>
                 </div>
                 <div className="flex space-x-3">

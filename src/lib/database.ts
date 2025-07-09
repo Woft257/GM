@@ -141,67 +141,100 @@ export interface QRToken {
   createdAt: Date;
   usedAt?: Date;
   usedBy?: string;
+  expiresAt: Date; // Hết hạn sau 15 phút
+  simpleCode: string; // 6 số để nhập thủ công
 }
 
-export const createQRToken = async (boothId: string, points: number): Promise<string> => {
+// Generate unique 6-digit code
+const generateSimpleCode = async (): Promise<string> => {
+  let code: string;
+  let isUnique = false;
+
+  while (!isUnique) {
+    // Generate 6-digit random number
+    code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Check if code already exists in active tokens
+    const tokensRef = collection(db, QR_TOKENS_COLLECTION);
+    const now = new Date();
+    const q = query(
+      tokensRef,
+      where('simpleCode', '==', code),
+      where('expiresAt', '>', Timestamp.fromDate(now)),
+      where('used', '==', false)
+    );
+
+    const existingTokens = await getDocs(q);
+    isUnique = existingTokens.empty;
+  }
+
+  return code!;
+};
+
+export const createQRToken = async (boothId: string, points: number): Promise<{ tokenId: string; simpleCode: string }> => {
   const tokenId = `${boothId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const simpleCode = await generateSimpleCode();
   const tokenRef = doc(db, QR_TOKENS_COLLECTION, tokenId);
-  
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // 15 phút
+
   await setDoc(tokenRef, {
     id: tokenId,
     boothId,
     points,
     used: false,
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    expiresAt: Timestamp.fromDate(expiresAt),
+    simpleCode
   });
-  
-  return tokenId;
+
+  return { tokenId, simpleCode };
 };
 
 export const useQRToken = async (tokenId: string, telegram: string): Promise<number> => {
   const tokenRef = doc(db, QR_TOKENS_COLLECTION, tokenId);
   const tokenDoc = await getDoc(tokenRef);
-  
+
   if (!tokenDoc.exists()) {
     throw new Error('QR token not found');
   }
-  
+
   const tokenData = tokenDoc.data();
-  
+
   if (tokenData.used) {
     throw new Error('QR token already used');
   }
-  
-  // Check if token is expired (24 hours)
-  const createdAt = tokenData.createdAt?.toDate();
+
+  // Check if token is expired (15 minutes)
+  const expiresAt = tokenData.expiresAt?.toDate();
   const now = new Date();
-  const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-  
-  if (hoursDiff > 24) {
+
+  if (now > expiresAt) {
     throw new Error('QR token expired');
   }
-  
+
   // Update user score
   await updateUserScore(telegram, tokenData.boothId, tokenData.points);
-  
+
   // Mark token as used
   await updateDoc(tokenRef, {
     used: true,
     usedAt: serverTimestamp(),
     usedBy: telegram
   });
-  
+
   return tokenData.points;
 };
 
 export const getQRToken = async (tokenId: string): Promise<QRToken | null> => {
   const tokenRef = doc(db, QR_TOKENS_COLLECTION, tokenId);
   const tokenDoc = await getDoc(tokenRef);
-  
+
   if (!tokenDoc.exists()) {
     return null;
   }
-  
+
   const data = tokenDoc.data();
   return {
     id: data.id,
@@ -210,6 +243,64 @@ export const getQRToken = async (tokenId: string): Promise<QRToken | null> => {
     used: data.used,
     createdAt: data.createdAt?.toDate() || new Date(),
     usedAt: data.usedAt?.toDate(),
-    usedBy: data.usedBy
+    usedBy: data.usedBy,
+    expiresAt: data.expiresAt?.toDate() || new Date(),
+    simpleCode: data.simpleCode || ''
   };
+};
+
+// Function to use QR token by simple code
+export const useQRTokenBySimpleCode = async (simpleCode: string, telegram: string): Promise<number> => {
+  const tokensRef = collection(db, QR_TOKENS_COLLECTION);
+  const now = new Date();
+
+  // Find active token with this simple code
+  const q = query(
+    tokensRef,
+    where('simpleCode', '==', simpleCode),
+    where('used', '==', false),
+    where('expiresAt', '>', Timestamp.fromDate(now))
+  );
+
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    throw new Error('Mã không hợp lệ hoặc đã hết hạn');
+  }
+
+  const tokenDoc = querySnapshot.docs[0];
+  const tokenData = tokenDoc.data();
+
+  // Update user score
+  await updateUserScore(telegram, tokenData.boothId, tokenData.points);
+
+  // Mark token as used
+  await updateDoc(tokenDoc.ref, {
+    used: true,
+    usedAt: serverTimestamp(),
+    usedBy: telegram
+  });
+
+  return tokenData.points;
+};
+
+// Function to clean up expired tokens
+export const cleanupExpiredTokens = async (): Promise<void> => {
+  const tokensRef = collection(db, QR_TOKENS_COLLECTION);
+  const now = new Date();
+
+  const q = query(
+    tokensRef,
+    where('expiresAt', '<=', Timestamp.fromDate(now)),
+    where('used', '==', false)
+  );
+
+  const expiredTokens = await getDocs(q);
+
+  const deletePromises = expiredTokens.docs.map(doc =>
+    updateDoc(doc.ref, { used: true, usedBy: 'EXPIRED' })
+  );
+
+  await Promise.all(deletePromises);
+  console.log(`Cleaned up ${expiredTokens.size} expired tokens`);
 };

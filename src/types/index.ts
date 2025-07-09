@@ -20,6 +20,8 @@ export interface QRToken {
   createdAt: Date;
   usedAt?: Date;
   usedBy?: string;
+  expiresAt: Date; // Hết hạn sau 15 phút
+  simpleCode: string; // 6 số để nhập thủ công
 }
 
 export interface BoothConfig {
