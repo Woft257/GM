@@ -149,23 +149,44 @@ export interface QRToken {
 const generateSimpleCode = async (): Promise<string> => {
   let code: string;
   let isUnique = false;
+  let attempts = 0;
+  const maxAttempts = 10;
 
-  while (!isUnique) {
+  while (!isUnique && attempts < maxAttempts) {
     // Generate 6-digit random number
     code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Check if code already exists in active tokens
-    const tokensRef = collection(db, QR_TOKENS_COLLECTION);
-    const now = new Date();
-    const q = query(
-      tokensRef,
-      where('simpleCode', '==', code),
-      where('expiresAt', '>', Timestamp.fromDate(now)),
-      where('used', '==', false)
-    );
+    try {
+      // Simple check - just check if code exists (without complex query)
+      const tokensRef = collection(db, QR_TOKENS_COLLECTION);
+      const q = query(tokensRef, where('simpleCode', '==', code));
+      const existingTokens = await getDocs(q);
 
-    const existingTokens = await getDocs(q);
-    isUnique = existingTokens.empty;
+      // If no existing tokens with this code, it's unique
+      isUnique = existingTokens.empty;
+
+      // If not unique, check if existing tokens are expired/used
+      if (!isUnique) {
+        const now = new Date();
+        let hasActiveToken = false;
+
+        existingTokens.forEach(doc => {
+          const data = doc.data();
+          const expiresAt = data.expiresAt?.toDate();
+          if (!data.used && expiresAt && now < expiresAt) {
+            hasActiveToken = true;
+          }
+        });
+
+        isUnique = !hasActiveToken;
+      }
+    } catch (error) {
+      console.warn('Error checking code uniqueness:', error);
+      // If error, just use the code (low chance of collision)
+      isUnique = true;
+    }
+
+    attempts++;
   }
 
   return code!;
@@ -254,53 +275,82 @@ export const useQRTokenBySimpleCode = async (simpleCode: string, telegram: strin
   const tokensRef = collection(db, QR_TOKENS_COLLECTION);
   const now = new Date();
 
-  // Find active token with this simple code
-  const q = query(
-    tokensRef,
-    where('simpleCode', '==', simpleCode),
-    where('used', '==', false),
-    where('expiresAt', '>', Timestamp.fromDate(now))
-  );
+  try {
+    // Find token with this simple code
+    const q = query(tokensRef, where('simpleCode', '==', simpleCode));
+    const querySnapshot = await getDocs(q);
 
-  const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      throw new Error('Mã không hợp lệ');
+    }
 
-  if (querySnapshot.empty) {
-    throw new Error('Mã không hợp lệ hoặc đã hết hạn');
+    // Check each token to find valid one
+    let validToken = null;
+    let validTokenData = null;
+
+    for (const doc of querySnapshot.docs) {
+      const data = doc.data();
+      const expiresAt = data.expiresAt?.toDate();
+
+      if (!data.used && expiresAt && now < expiresAt) {
+        validToken = doc;
+        validTokenData = data;
+        break;
+      }
+    }
+
+    if (!validToken || !validTokenData) {
+      throw new Error('Mã đã được sử dụng hoặc đã hết hạn');
+    }
+
+    // Update user score
+    await updateUserScore(telegram, validTokenData.boothId, validTokenData.points);
+
+    // Mark token as used
+    await updateDoc(validToken.ref, {
+      used: true,
+      usedAt: serverTimestamp(),
+      usedBy: telegram
+    });
+
+    return validTokenData.points;
+  } catch (error: any) {
+    console.error('Error using simple code:', error);
+    throw error;
   }
-
-  const tokenDoc = querySnapshot.docs[0];
-  const tokenData = tokenDoc.data();
-
-  // Update user score
-  await updateUserScore(telegram, tokenData.boothId, tokenData.points);
-
-  // Mark token as used
-  await updateDoc(tokenDoc.ref, {
-    used: true,
-    usedAt: serverTimestamp(),
-    usedBy: telegram
-  });
-
-  return tokenData.points;
 };
 
-// Function to clean up expired tokens
+// Function to clean up expired tokens (simplified to avoid index requirements)
 export const cleanupExpiredTokens = async (): Promise<void> => {
-  const tokensRef = collection(db, QR_TOKENS_COLLECTION);
-  const now = new Date();
+  try {
+    const tokensRef = collection(db, QR_TOKENS_COLLECTION);
+    const now = new Date();
 
-  const q = query(
-    tokensRef,
-    where('expiresAt', '<=', Timestamp.fromDate(now)),
-    where('used', '==', false)
-  );
+    // Get all unused tokens
+    const q = query(tokensRef, where('used', '==', false));
+    const allTokens = await getDocs(q);
 
-  const expiredTokens = await getDocs(q);
+    const expiredTokens: any[] = [];
 
-  const deletePromises = expiredTokens.docs.map(doc =>
-    updateDoc(doc.ref, { used: true, usedBy: 'EXPIRED' })
-  );
+    // Filter expired tokens manually
+    allTokens.forEach(doc => {
+      const data = doc.data();
+      const expiresAt = data.expiresAt?.toDate();
 
-  await Promise.all(deletePromises);
-  console.log(`Cleaned up ${expiredTokens.size} expired tokens`);
+      if (expiresAt && now > expiresAt) {
+        expiredTokens.push(doc);
+      }
+    });
+
+    // Mark expired tokens as used
+    const deletePromises = expiredTokens.map(doc =>
+      updateDoc(doc.ref, { used: true, usedBy: 'EXPIRED' })
+    );
+
+    await Promise.all(deletePromises);
+    console.log(`Cleaned up ${expiredTokens.length} expired tokens`);
+  } catch (error) {
+    console.error('Cleanup error:', error);
+    // Don't throw error to avoid breaking the app
+  }
 };
