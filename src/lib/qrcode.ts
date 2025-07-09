@@ -1,33 +1,38 @@
 import QRCode from 'qrcode';
 import { createQRToken } from './database';
 
-export const generateQRCodeURL = async (
-  boothId: string, 
+export const generateQRCodeData = async (
+  boothId: string,
   points: number
-): Promise<{ qrCodeDataURL: string; tokenId: string; url: string }> => {
+): Promise<{ qrCodeDataURL: string; tokenId: string; qrData: string }> => {
   try {
     // Create token in database
     const tokenId = await createQRToken(boothId, points);
-    
-    // Create URL for QR code
-    const baseURL = import.meta.env.VITE_APP_URL ||
-                   (import.meta.env.DEV ? 'http://localhost:5173' : 'https://gm-three-lac.vercel.app');
-    const url = `${baseURL}/score/${tokenId}`;
-    
-    // Generate QR code
-    const qrCodeDataURL = await QRCode.toDataURL(url, {
+
+    // Create embedded data for QR code (JSON format)
+    const qrData = JSON.stringify({
+      type: 'GM_VIETNAM_SCORE',
+      tokenId,
+      boothId,
+      points,
+      timestamp: Date.now()
+    });
+
+    // Generate QR code with embedded data
+    const qrCodeDataURL = await QRCode.toDataURL(qrData, {
       width: 300,
       margin: 2,
       color: {
         dark: '#000000',
         light: '#FFFFFF'
-      }
+      },
+      errorCorrectionLevel: 'M'
     });
-    
+
     return {
       qrCodeDataURL,
       tokenId,
-      url
+      qrData
     };
   } catch (error) {
     console.error('Error generating QR code:', error);
@@ -35,35 +40,60 @@ export const generateQRCodeURL = async (
   }
 };
 
-export const generateQRCodeSVG = async (
-  boothId: string, 
-  points: number
-): Promise<{ qrCodeSVG: string; tokenId: string; url: string }> => {
+// Function to parse QR data
+export const parseQRData = (qrText: string): {
+  type: string;
+  tokenId: string;
+  boothId: string;
+  points: number;
+  timestamp: number;
+} | null => {
   try {
-    const tokenId = await createQRToken(boothId, points);
-    const baseURL = import.meta.env.VITE_APP_URL ||
-                   (import.meta.env.DEV ? 'http://localhost:5173' : 'https://gm-three-lac.vercel.app');
-    const url = `${baseURL}/score/${tokenId}`;
-    
-    const qrCodeSVG = await QRCode.toString(url, {
-      type: 'svg',
-      width: 300,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF'
-      }
-    });
-    
-    return {
-      qrCodeSVG,
-      tokenId,
-      url
-    };
+    const data = JSON.parse(qrText);
+
+    // Validate QR data structure
+    if (
+      data.type === 'GM_VIETNAM_SCORE' &&
+      data.tokenId &&
+      data.boothId &&
+      typeof data.points === 'number' &&
+      data.timestamp
+    ) {
+      return data;
+    }
+
+    return null;
   } catch (error) {
-    console.error('Error generating QR code SVG:', error);
-    throw error;
+    console.error('Error parsing QR data:', error);
+    return null;
   }
+};
+
+// Function to validate QR data
+export const validateQRData = (qrData: any): boolean => {
+  if (!qrData) return false;
+
+  // Check if QR is not too old (24 hours)
+  const now = Date.now();
+  const qrAge = now - qrData.timestamp;
+  const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+  if (qrAge > maxAge) {
+    return false;
+  }
+
+  // Check if booth exists
+  if (!(qrData.boothId in BOOTH_CONFIGS)) {
+    return false;
+  }
+
+  // Check if points are within valid range
+  const booth = BOOTH_CONFIGS[qrData.boothId as BoothId];
+  if (qrData.points < booth.minScore || qrData.points > booth.maxScore) {
+    return false;
+  }
+
+  return true;
 };
 
 // Booth configurations

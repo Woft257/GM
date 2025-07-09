@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* QR Scanner Styles */
+#qr-scanner-container {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#qr-scanner-container video {
+  border-radius: 12px;
+  width: 100% !important;
+  height: auto !important;
+}
+
+#qr-scanner-container canvas {
+  border-radius: 12px;
+}
+
+/* Hide default QR scanner UI elements */
+#qr-scanner-container .qr-scanner-stop-button {
+  display: none !important;
+}
+
+#qr-scanner-container .qr-scanner-torch-button {
+  background: rgba(139, 92, 246, 0.8) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  margin: 8px !important;
+}
+
+#qr-scanner-container .qr-scanner-zoom-slider {
+  margin: 8px !important;
+}
+
+/* Custom scanner overlay */
+#qr-scanner-container .qr-scanner-region {
+  border: 2px solid rgba(139, 92, 246, 0.8) !important;
+  border-radius: 12px !important;
+}

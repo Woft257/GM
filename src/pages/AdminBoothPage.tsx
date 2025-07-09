@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QrCode, Download, RefreshCw, Settings, Star, AlertCircle } from 'lucide-react';
 import Layout from '../components/Layout';
-import { generateQRCodeURL, BOOTH_CONFIGS, BoothId } from '../lib/qrcode';
+import { generateQRCodeData, BOOTH_CONFIGS, BoothId } from '../lib/qrcode';
 
 const AdminBoothPage: React.FC = () => {
   const { boothId } = useParams<{ boothId: string }>();
@@ -12,7 +12,7 @@ const AdminBoothPage: React.FC = () => {
   const [qrData, setQrData] = useState<{
     qrCodeDataURL: string;
     tokenId: string;
-    url: string;
+    qrData: string;
   } | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string>('');
@@ -52,7 +52,7 @@ const AdminBoothPage: React.FC = () => {
     setError('');
 
     try {
-      const result = await generateQRCodeURL(booth.id, points);
+      const result = await generateQRCodeData(booth.id, points);
       setQrData(result);
     } catch (error) {
       console.error('Error generating QR code:', error);
@@ -207,8 +207,8 @@ const AdminBoothPage: React.FC = () => {
                 </div>
                 
                 <div className="bg-white/5 rounded-lg p-3">
-                  <p className="text-white/60 text-sm">URL</p>
-                  <p className="text-white font-mono text-xs break-all">{qrData.url}</p>
+                  <p className="text-white/60 text-sm">QR Data</p>
+                  <p className="text-white font-mono text-xs break-all">{qrData.qrData}</p>
                 </div>
               </div>
 
