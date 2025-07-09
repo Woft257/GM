@@ -13,10 +13,12 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string>('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualInput, setManualInput] = useState('');
 
   useEffect(() => {
-    if (isOpen && !scannerRef.current) {
-      initializeScanner();
+    if (isOpen && !scannerRef.current && hasPermission === null) {
+      checkCameraPermission();
     }
 
     return () => {
@@ -27,12 +29,22 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     };
   }, [isOpen]);
 
-  const initializeScanner = async () => {
+  const checkCameraPermission = async () => {
     try {
-      // Check camera permission
+      // Check if camera permission is already granted
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach(track => track.stop());
       setHasPermission(true);
+      initializeScanner();
+    } catch (err) {
+      console.log('Camera permission not granted yet');
+      setHasPermission(false);
+    }
+  };
+
+  const initializeScanner = async () => {
+    try {
+      setError('');
 
       const config: Html5QrcodeScannerConfig = {
         fps: 10,
@@ -40,8 +52,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
         aspectRatio: 1.0,
         supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
         showTorchButtonIfSupported: true,
-        showZoomSliderIfSupported: true,
-        defaultZoomValueIfSupported: 2,
+        showZoomSliderIfSupported: false,
+        defaultZoomValueIfSupported: 1,
       };
 
       scannerRef.current = new Html5QrcodeScanner(
@@ -58,18 +70,16 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
         },
         (errorMessage) => {
           // Ignore frequent scan errors
-          if (!errorMessage.includes('No QR code found')) {
+          if (!errorMessage.includes('No QR code found') && !errorMessage.includes('NotFoundException')) {
             console.warn('QR scan error:', errorMessage);
           }
         }
       );
 
       setIsScanning(true);
-      setError('');
     } catch (err: any) {
-      console.error('Camera access error:', err);
-      setHasPermission(false);
-      setError('Không thể truy cập camera. Vui lòng cho phép quyền camera và thử lại.');
+      console.error('Scanner initialization error:', err);
+      setError('Không thể khởi tạo scanner. Vui lòng thử lại.');
     }
   };
 
@@ -81,18 +91,48 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     setIsScanning(false);
     setError('');
     setHasPermission(null);
+    setShowManualInput(false);
+    setManualInput('');
     onClose();
+  };
+
+  const handleManualSubmit = () => {
+    if (manualInput.trim()) {
+      onScanSuccess(manualInput.trim());
+      handleClose();
+    }
   };
 
   const requestCameraPermission = async () => {
     try {
-      await navigator.mediaDevices.getUserMedia({ video: true });
-      setHasPermission(true);
       setError('');
-      initializeScanner();
-    } catch (err) {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment' // Prefer back camera
+        }
+      });
+
+      // Stop the stream immediately as we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+
+      setHasPermission(true);
+
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        initializeScanner();
+      }, 100);
+
+    } catch (err: any) {
+      console.error('Camera permission error:', err);
       setHasPermission(false);
-      setError('Không thể truy cập camera. Vui lòng kiểm tra quyền camera trong cài đặt trình duyệt.');
+
+      if (err.name === 'NotAllowedError') {
+        setError('Quyền camera bị từ chối. Vui lòng cho phép truy cập camera và tải lại trang.');
+      } else if (err.name === 'NotFoundError') {
+        setError('Không tìm thấy camera. Vui lòng kiểm tra thiết bị camera.');
+      } else {
+        setError('Không thể truy cập camera. Vui lòng kiểm tra quyền camera trong cài đặt trình duyệt.');
+      }
     }
   };
 
@@ -133,14 +173,62 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                   Để quét QR code, ứng dụng cần quyền truy cập camera của bạn.
                 </p>
                 {error && (
-                  <p className="text-red-400 text-sm mb-4">{error}</p>
+                  <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg mb-4">
+                    <p className="text-red-300 text-sm">{error}</p>
+                  </div>
                 )}
-                <button
-                  onClick={requestCameraPermission}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
-                >
-                  Cho phép truy cập camera
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={requestCameraPermission}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
+                  >
+                    Cho phép truy cập camera
+                  </button>
+
+                  <button
+                    onClick={() => setShowManualInput(true)}
+                    className="w-full bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200"
+                  >
+                    Nhập mã QR thủ công
+                  </button>
+
+                  <div className="text-white/60 text-xs">
+                    <p>💡 Nếu camera không hoạt động:</p>
+                    <p>1. Click vào biểu tượng 🔒 trên thanh địa chỉ</p>
+                    <p>2. Cho phép Camera</p>
+                    <p>3. Tải lại trang</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showManualInput && (
+            <div className="text-center space-y-4">
+              <h4 className="text-white font-semibold">Nhập mã QR thủ công</h4>
+              <div className="space-y-3">
+                <textarea
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  placeholder="Dán nội dung QR code vào đây..."
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  rows={4}
+                />
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleManualSubmit}
+                    disabled={!manualInput.trim()}
+                    className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Xử lý
+                  </button>
+                  <button
+                    onClick={() => setShowManualInput(false)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-lg font-semibold transition-all duration-200"
+                  >
+                    Quay lại
+                  </button>
+                </div>
               </div>
             </div>
           )}
