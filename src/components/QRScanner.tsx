@@ -255,6 +255,12 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           position: relative !important;
         }
 
+        /* QR Frame overlay styles */
+        .qr-frame-overlay {
+          z-index: 10 !important;
+          pointer-events: none !important;
+        }
+
         /* Ensure scanner container is visible and properly sized */
         #qr-scanner-container {
           background: #000 !important;
@@ -438,19 +444,37 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
 
 
-                {/* Mobile Scanning overlay */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute inset-3 sm:inset-4 border-2 border-white/40 rounded-lg">
-                    {/* Corner indicators - Mobile optimized */}
-                    <div className="absolute top-0 left-0 w-4 h-4 sm:w-6 sm:h-6 border-t-3 border-l-3 sm:border-t-4 sm:border-l-4 border-purple-400 rounded-tl-lg"></div>
-                    <div className="absolute top-0 right-0 w-4 h-4 sm:w-6 sm:h-6 border-t-3 border-r-3 sm:border-t-4 sm:border-r-4 border-purple-400 rounded-tr-lg"></div>
-                    <div className="absolute bottom-0 left-0 w-4 h-4 sm:w-6 sm:h-6 border-b-3 border-l-3 sm:border-b-4 sm:border-l-4 border-purple-400 rounded-bl-lg"></div>
-                    <div className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 border-b-3 border-r-3 sm:border-b-4 sm:border-r-4 border-purple-400 rounded-br-lg"></div>
+                {/* QR Scanning Frame Overlay */}
+                <div className="absolute inset-0 pointer-events-none qr-frame-overlay">
+                  {/* Dark overlay with transparent center */}
+                  <div className="absolute inset-0 bg-black/50">
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-72 sm:h-72">
+                      {/* Transparent center for QR scanning */}
+                      <div className="w-full h-full bg-transparent border-2 border-white rounded-lg relative">
+                        {/* Corner brackets */}
+                        <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
+                        <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
+                        <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
+                        <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
+
+                        {/* Scanning line animation */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse opacity-80"></div>
+                        </div>
+
+                        {/* Center crosshair */}
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                          <div className="w-6 h-6 border-2 border-green-400 rounded-full bg-green-400/20"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Scanning line animation */}
-                  <div className="absolute inset-3 sm:inset-4 flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent animate-pulse"></div>
+                  {/* Instructions */}
+                  <div className="absolute bottom-4 left-0 right-0 text-center">
+                    <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2 mx-4">
+                      <p className="text-white text-sm font-medium">Đưa QR code vào khung vuông</p>
+                    </div>
                   </div>
                 </div>
               </div>
