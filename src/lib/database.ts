@@ -117,7 +117,7 @@ export const subscribeToLeaderboard = (
 ) => {
   const usersRef = collection(db, USERS_COLLECTION);
   const q = query(usersRef, orderBy('totalScore', 'desc'), limit(limitCount));
-  
+
   return onSnapshot(q, (querySnapshot) => {
     const users = querySnapshot.docs.map(doc => {
       const data = doc.data();
@@ -129,6 +129,29 @@ export const subscribeToLeaderboard = (
       };
     });
     callback(users);
+  });
+};
+
+// Real-time user subscription
+export const subscribeToUser = (
+  telegram: string,
+  callback: (user: User | null) => void
+) => {
+  const userRef = doc(db, USERS_COLLECTION, telegram);
+
+  return onSnapshot(userRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      const user: User = {
+        telegram: data.telegram,
+        totalScore: data.totalScore || 0,
+        playedBooths: data.playedBooths || {},
+        createdAt: data.createdAt?.toDate() || new Date()
+      };
+      callback(user);
+    } else {
+      callback(null);
+    }
   });
 };
 

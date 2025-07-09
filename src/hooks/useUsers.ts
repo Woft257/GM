@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types';
-import { getLeaderboard, subscribeToLeaderboard, getUser, createUser } from '../lib/database';
+import { getLeaderboard, subscribeToLeaderboard, getUser, createUser, subscribeToUser } from '../lib/database';
 
 // Mock data cho demo (fallback)
 const mockUsers: User[] = [
@@ -82,9 +82,11 @@ export const useUser = (telegram: string) => {
       return;
     }
 
+    let unsubscribe: (() => void) | null = null;
+
     const loadUser = async () => {
       try {
-        // Try to get user from Firebase
+        // Try to get user from Firebase first
         let firebaseUser = await getUser(telegram);
 
         if (!firebaseUser) {
@@ -93,6 +95,15 @@ export const useUser = (telegram: string) => {
         }
 
         setUser(firebaseUser);
+        setLoading(false);
+
+        // Set up real-time subscription
+        unsubscribe = subscribeToUser(telegram, (updatedUser) => {
+          if (updatedUser) {
+            setUser(updatedUser);
+          }
+        });
+
       } catch (error) {
         console.error('Error loading user from Firebase:', error);
 
@@ -111,12 +122,17 @@ export const useUser = (telegram: string) => {
           setUser(newUser);
           mockUsers.push(newUser);
         }
-      } finally {
         setLoading(false);
       }
     };
 
     loadUser();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [telegram]);
 
   return { user, loading };
