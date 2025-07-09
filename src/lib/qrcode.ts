@@ -10,7 +10,8 @@ export const generateQRCodeURL = async (
     const tokenId = await createQRToken(boothId, points);
     
     // Create URL for QR code
-    const baseURL = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
+    const baseURL = import.meta.env.VITE_APP_URL ||
+                   (import.meta.env.DEV ? 'http://localhost:5173' : 'https://gm-three-lac.vercel.app');
     const url = `${baseURL}/score/${tokenId}`;
     
     // Generate QR code
@@ -40,7 +41,8 @@ export const generateQRCodeSVG = async (
 ): Promise<{ qrCodeSVG: string; tokenId: string; url: string }> => {
   try {
     const tokenId = await createQRToken(boothId, points);
-    const baseURL = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
+    const baseURL = import.meta.env.VITE_APP_URL ||
+                   (import.meta.env.DEV ? 'http://localhost:5173' : 'https://gm-three-lac.vercel.app');
     const url = `${baseURL}/score/${tokenId}`;
     
     const qrCodeSVG = await QRCode.toString(url, {

@@ -102,7 +102,7 @@ Thêm các environment variables sau trong Vercel dashboard:
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 - `VITE_USE_FIREBASE_PROD=true`
-- `VITE_APP_URL=https://your-app.vercel.app`
+- `VITE_APP_URL=https://gm-three-lac.vercel.app`
 
 ## 📱 Cách sử dụng
 
