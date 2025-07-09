@@ -29,13 +29,29 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     };
   }, [isOpen]);
 
+  // Separate effect for when permission is granted
+  useEffect(() => {
+    if (hasPermission === true && isOpen && !scannerRef.current && !showManualInput) {
+      // Ensure DOM is ready
+      const timer = setTimeout(() => {
+        initializeScanner();
+      }, 200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasPermission, isOpen, showManualInput]);
+
   const checkCameraPermission = async () => {
     try {
       // Check if camera permission is already granted
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' } // Prefer back camera
+        }
+      });
       stream.getTracks().forEach(track => track.stop());
       setHasPermission(true);
-      initializeScanner();
+      // initializeScanner will be called by useEffect
     } catch (err) {
       console.log('Camera permission not granted yet');
       setHasPermission(false);
@@ -46,6 +62,19 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     try {
       setError('');
 
+      // Wait for DOM element to be available
+      const element = document.getElementById("qr-scanner-container");
+      if (!element) {
+        console.error('QR scanner container not found, waiting...');
+        // Try again after a short delay
+        setTimeout(() => {
+          initializeScanner();
+        }, 500);
+        return;
+      }
+
+      console.log('Initializing QR scanner with back camera preference...');
+
       const config: Html5QrcodeScannerConfig = {
         fps: 10,
         qrbox: { width: 250, height: 250 },
@@ -54,6 +83,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
         showTorchButtonIfSupported: true,
         showZoomSliderIfSupported: false,
         defaultZoomValueIfSupported: 1,
+        // Prefer back camera
+        videoConstraints: {
+          facingMode: { ideal: "environment" }
+        }
       };
 
       scannerRef.current = new Html5QrcodeScanner(
@@ -64,13 +97,16 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
       scannerRef.current.render(
         (decodedText) => {
+          console.log('QR Code scanned:', decodedText);
           setIsScanning(false);
           onScanSuccess(decodedText);
           handleClose();
         },
         (errorMessage) => {
           // Ignore frequent scan errors
-          if (!errorMessage.includes('No QR code found') && !errorMessage.includes('NotFoundException')) {
+          if (!errorMessage.includes('No QR code found') &&
+              !errorMessage.includes('NotFoundException') &&
+              !errorMessage.includes('No MultiFormat Readers')) {
             console.warn('QR scan error:', errorMessage);
           }
         }
@@ -108,7 +144,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       setError('');
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment' // Prefer back camera
+          facingMode: { ideal: 'environment' } // Prefer back camera
         }
       });
 
@@ -116,11 +152,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       stream.getTracks().forEach(track => track.stop());
 
       setHasPermission(true);
-
-      // Small delay to ensure state is updated
-      setTimeout(() => {
-        initializeScanner();
-      }, 100);
+      // initializeScanner will be called by useEffect when hasPermission changes
 
     } catch (err: any) {
       console.error('Camera permission error:', err);
@@ -130,6 +162,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
         setError('Quyền camera bị từ chối. Vui lòng cho phép truy cập camera và tải lại trang.');
       } else if (err.name === 'NotFoundError') {
         setError('Không tìm thấy camera. Vui lòng kiểm tra thiết bị camera.');
+      } else if (err.name === 'NotReadableError') {
+        setError('Camera đang được sử dụng bởi ứng dụng khác. Vui lòng đóng các ứng dụng khác và thử lại.');
       } else {
         setError('Không thể truy cập camera. Vui lòng kiểm tra quyền camera trong cài đặt trình duyệt.');
       }
