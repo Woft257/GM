@@ -80,9 +80,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
         supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        showTorchButtonIfSupported: true,
+        showTorchButtonIfSupported: false, // Ẩn torch button mặc định
         showZoomSliderIfSupported: false,
         defaultZoomValueIfSupported: 1,
+        rememberLastUsedCamera: true,
         // Prefer back camera
         videoConstraints: {
           facingMode: { ideal: "environment" }
@@ -111,6 +112,33 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           }
         }
       );
+
+      // Ẩn UI mặc định của thư viện sau khi render
+      setTimeout(() => {
+        const container = document.getElementById('qr-scanner-container');
+        if (container) {
+          // Ẩn select camera dropdown và stop button
+          const selectElements = container.querySelectorAll('select');
+          const buttonElements = container.querySelectorAll('button');
+          const spanElements = container.querySelectorAll('span');
+
+          selectElements.forEach(el => {
+            (el as HTMLElement).style.display = 'none';
+          });
+
+          buttonElements.forEach(el => {
+            if (el.textContent?.includes('Stop') || el.textContent?.includes('Camera')) {
+              (el as HTMLElement).style.display = 'none';
+            }
+          });
+
+          spanElements.forEach(el => {
+            if (el.textContent?.includes('Select Camera') || el.textContent?.includes('Stop')) {
+              (el as HTMLElement).style.display = 'none';
+            }
+          });
+        }
+      }, 1000);
 
       setIsScanning(true);
     } catch (err: any) {
@@ -173,64 +201,94 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 w-full max-w-md">
+    <>
+      {/* Global CSS để ẩn UI mặc định của Html5QrcodeScanner */}
+      <style>{`
+        #qr-scanner-container select,
+        #qr-scanner-container button[id*="html5-qrcode"],
+        #qr-scanner-container span[id*="html5-qrcode"],
+        #qr-scanner-container div[id*="html5-qrcode-select"],
+        #qr-scanner-container div[id*="html5-qrcode-button"],
+        .html5-qrcode-element {
+          display: none !important;
+        }
+
+        #qr-scanner-container video {
+          border-radius: 1rem !important;
+          width: 100% !important;
+          height: auto !important;
+        }
+      `}</style>
+
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-purple-900/90 via-blue-900/90 to-indigo-900/90 backdrop-blur-md rounded-3xl border border-white/20 w-full max-w-lg shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/20">
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center">
-            <Camera className="h-6 w-6 text-white mr-2" />
-            <h3 className="text-lg font-semibold text-white">Quét QR Code</h3>
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3">
+              <Camera className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-white">Quét QR Code</h3>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-xl transition-all duration-200 hover:scale-110"
           >
-            <X className="h-5 w-5 text-white" />
+            <X className="h-6 w-6 text-white" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6">
           {hasPermission === null && (
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-              <p className="text-white/70">Đang khởi tạo camera...</p>
+            <div className="text-center py-8">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mx-auto mb-6"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 animate-pulse"></div>
+              </div>
+              <h4 className="text-white font-semibold mb-2">Đang khởi tạo camera</h4>
+              <p className="text-white/60 text-sm">Vui lòng chờ trong giây lát...</p>
             </div>
           )}
 
           {hasPermission === false && (
-            <div className="text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-red-400 mx-auto" />
-              <div>
-                <h4 className="text-white font-semibold mb-2">Cần quyền truy cập camera</h4>
-                <p className="text-white/70 text-sm mb-4">
-                  Để quét QR code, ứng dụng cần quyền truy cập camera của bạn.
-                </p>
-                {error && (
-                  <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg mb-4">
-                    <p className="text-red-300 text-sm">{error}</p>
-                  </div>
-                )}
-                <div className="space-y-3">
-                  <button
-                    onClick={requestCameraPermission}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
-                  >
-                    Cho phép truy cập camera
-                  </button>
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="h-8 w-8 text-white" />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-3">Cần quyền truy cập camera</h4>
+              <p className="text-white/70 mb-6 leading-relaxed">
+                Để quét QR code, ứng dụng cần quyền<br />
+                truy cập camera của thiết bị
+              </p>
 
-                  <button
-                    onClick={() => setShowManualInput(true)}
-                    className="w-full bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200"
-                  >
-                    Nhập mã QR thủ công
-                  </button>
+              {error && (
+                <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl mb-6">
+                  <p className="text-red-300 text-sm">{error}</p>
+                </div>
+              )}
 
-                  <div className="text-white/60 text-xs">
-                    <p>💡 Nếu camera không hoạt động:</p>
+              <div className="space-y-4">
+                <button
+                  onClick={requestCameraPermission}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                >
+                  🎥 Cho phép truy cập camera
+                </button>
+
+                <button
+                  onClick={() => setShowManualInput(true)}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 border border-white/20"
+                >
+                  ⌨️ Nhập mã QR thủ công
+                </button>
+
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-left">
+                  <p className="text-blue-300 font-semibold mb-2">💡 Hướng dẫn khắc phục:</p>
+                  <div className="text-white/70 text-sm space-y-1">
                     <p>1. Click vào biểu tượng 🔒 trên thanh địa chỉ</p>
-                    <p>2. Cho phép Camera</p>
-                    <p>3. Tải lại trang</p>
+                    <p>2. Chọn "Cho phép Camera"</p>
+                    <p>3. Tải lại trang và thử lại</p>
                   </div>
                 </div>
               </div>
@@ -238,29 +296,37 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           )}
 
           {showManualInput && (
-            <div className="text-center space-y-4">
-              <h4 className="text-white font-semibold">Nhập mã QR thủ công</h4>
-              <div className="space-y-3">
-                <textarea
-                  value={manualInput}
-                  onChange={(e) => setManualInput(e.target.value)}
-                  placeholder="Dán nội dung QR code vào đây..."
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  rows={4}
-                />
+            <div className="text-center py-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white text-xl">⌨️</span>
+              </div>
+              <h4 className="text-xl font-bold text-white mb-6">Nhập mã QR thủ công</h4>
+              <div className="space-y-4">
+                <div className="relative">
+                  <textarea
+                    value={manualInput}
+                    onChange={(e) => setManualInput(e.target.value)}
+                    placeholder="Dán nội dung QR code vào đây..."
+                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none backdrop-blur-sm"
+                    rows={4}
+                  />
+                  <div className="absolute top-2 right-2">
+                    <span className="text-xs text-white/40">Ctrl+V để dán</span>
+                  </div>
+                </div>
                 <div className="flex space-x-3">
                   <button
                     onClick={handleManualSubmit}
                     disabled={!manualInput.trim()}
-                    className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-4 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-lg"
                   >
-                    Xử lý
+                    ✅ Xử lý mã QR
                   </button>
                   <button
                     onClick={() => setShowManualInput(false)}
-                    className="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-lg font-semibold transition-all duration-200"
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white py-4 rounded-xl font-semibold transition-all duration-200 border border-white/20"
                   >
-                    Quay lại
+                    ↩️ Quay lại
                   </button>
                 </div>
               </div>
@@ -268,42 +334,90 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           )}
 
           {hasPermission === true && (
-            <div>
+            <div className="space-y-6">
               {isScanning && (
-                <div className="text-center mb-4">
-                  <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <CheckCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <h4 className="text-white font-semibold mb-2">Camera đã sẵn sàng</h4>
                   <p className="text-white/70 text-sm">
-                    Đưa QR code vào khung hình để quét
+                    Đưa QR code vào khung hình để quét tự động
                   </p>
                 </div>
               )}
-              
+
               {/* QR Scanner Container */}
-              <div 
-                id="qr-scanner-container" 
-                className="w-full rounded-lg overflow-hidden"
-                style={{ minHeight: '300px' }}
-              />
-              
+              <div className="relative">
+                <div
+                  id="qr-scanner-container"
+                  className="w-full rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl qr-scanner-custom"
+                  style={{ minHeight: '320px' }}
+                />
+
+                {/* Custom CSS để ẩn UI mặc định */}
+                <style jsx>{`
+                  .qr-scanner-custom :global(#html5-qrcode-select-camera),
+                  .qr-scanner-custom :global(#html5-qrcode-button-camera-stop),
+                  .qr-scanner-custom :global(.html5-qrcode-element),
+                  .qr-scanner-custom :global([id*="html5-qrcode-select"]),
+                  .qr-scanner-custom :global([id*="html5-qrcode-button"]) {
+                    display: none !important;
+                  }
+
+                  .qr-scanner-custom :global(video) {
+                    border-radius: 1rem;
+                  }
+                `}</style>
+
+                {/* Scanning overlay */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-4 border-2 border-white/30 rounded-xl">
+                    {/* Corner indicators */}
+                    <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-purple-400 rounded-tl-lg"></div>
+                    <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-purple-400 rounded-tr-lg"></div>
+                    <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-purple-400 rounded-bl-lg"></div>
+                    <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-purple-400 rounded-br-lg"></div>
+                  </div>
+                </div>
+              </div>
+
               {error && (
-                <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
                   <p className="text-red-300 text-sm text-center">{error}</p>
                 </div>
               )}
+
+              {/* Manual input option */}
+              <div className="text-center">
+                <button
+                  onClick={() => setShowManualInput(true)}
+                  className="text-white/60 hover:text-white text-sm underline transition-colors"
+                >
+                  Không quét được? Nhập thủ công →
+                </button>
+              </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/20">
-          <div className="text-center">
-            <p className="text-white/60 text-sm">
-              💡 Mẹo: Giữ camera ổn định và đảm bảo QR code được chiếu sáng tốt
-            </p>
+        <div className="p-6 border-t border-white/10 bg-gradient-to-r from-purple-900/50 to-blue-900/50">
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-2xl">💡</span>
+              <p className="text-white/80 font-medium">Mẹo quét QR hiệu quả</p>
+            </div>
+            <div className="text-white/60 text-sm space-y-1">
+              <p>• Giữ camera ổn định và đảm bảo ánh sáng đủ</p>
+              <p>• Đưa QR code vào giữa khung hình</p>
+              <p>• Khoảng cách 10-30cm là tối ưu</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 
