@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Html5QrcodeScanner, Html5QrcodeScannerConfig, Html5QrcodeScanType } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeScanType } from 'html5-qrcode';
 import { Camera, X, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface QRScannerProps {
@@ -9,7 +9,7 @@ interface QRScannerProps {
 }
 
 const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen }) => {
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string>('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -30,7 +30,11 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+        try {
+          scannerRef.current.stop();
+        } catch (err) {
+          console.error('Error stopping scanner:', err);
+        }
         scannerRef.current = null;
       }
       // Restore body scroll
@@ -71,115 +75,80 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     try {
       setError('');
 
+      // Clear any existing scanner
+      if (scannerRef.current) {
+        try {
+          await scannerRef.current.stop();
+        } catch (err) {
+          console.log('Error stopping scanner:', err);
+        }
+        scannerRef.current = null;
+      }
+
       // Wait for DOM element to be available
       const element = document.getElementById("qr-scanner-container");
       if (!element) {
         console.error('QR scanner container not found, waiting...');
-        // Try again after a short delay
         setTimeout(() => {
           initializeScanner();
         }, 500);
         return;
       }
 
-      console.log('Initializing QR scanner with back camera preference...');
+      // Clear container content
+      element.innerHTML = '';
 
-      const config: Html5QrcodeScannerConfig = {
-        fps: 15, // Tăng FPS để responsive hơn
-        qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
-          // Dynamic QR box size based on screen
-          const minEdgePercentage = 0.7; // 70% of the smaller dimension
-          const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-          const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
-          return {
-            width: qrboxSize,
-            height: qrboxSize,
-          };
-        },
-        aspectRatio: 1.0,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        showTorchButtonIfSupported: false,
-        showZoomSliderIfSupported: false,
-        defaultZoomValueIfSupported: 1,
-        rememberLastUsedCamera: true,
-        // Prefer back camera with better constraints
-        videoConstraints: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        // Performance optimizations
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true
-        }
-      };
+      console.log('Initializing QR scanner with Html5Qrcode...');
 
-      scannerRef.current = new Html5QrcodeScanner(
-        "qr-scanner-container",
-        config,
-        false
+      // Create Html5Qrcode instance
+      scannerRef.current = new Html5Qrcode("qr-scanner-container");
+
+      // Get camera devices
+      const devices = await Html5Qrcode.getCameras();
+      console.log('Available cameras:', devices);
+
+      // Prefer back camera
+      let cameraId = devices[0]?.id;
+      const backCamera = devices.find(device =>
+        device.label.toLowerCase().includes('back') ||
+        device.label.toLowerCase().includes('rear') ||
+        device.label.toLowerCase().includes('environment')
       );
+      if (backCamera) {
+        cameraId = backCamera.id;
+        console.log('Using back camera:', backCamera.label);
+      }
 
-      scannerRef.current.render(
-        (decodedText) => {
+      // Start scanning
+      await scannerRef.current.start(
+        cameraId,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        },
+        (decodedText: string) => {
           console.log('QR Code scanned:', decodedText);
           setIsScanning(false);
           onScanSuccess(decodedText);
           handleClose();
         },
-        (errorMessage) => {
-          // Ignore frequent scan errors to reduce console noise
+        (errorMessage: string) => {
+          // Ignore frequent scan errors
           if (!errorMessage.includes('No QR code found') &&
-              !errorMessage.includes('NotFoundException') &&
-              !errorMessage.includes('No MultiFormat Readers') &&
-              !errorMessage.includes('QR code parse error')) {
+              !errorMessage.includes('NotFoundException')) {
             console.warn('QR scan error:', errorMessage);
           }
         }
       );
 
-      // Ẩn UI mặc định của thư viện với multiple attempts
-      const hideUIElements = () => {
-        const container = document.getElementById('qr-scanner-container');
-        if (container) {
-          // Ẩn tất cả elements không cần thiết
-          const selectElements = container.querySelectorAll('select, [id*="select"], [class*="select"]');
-          const buttonElements = container.querySelectorAll('button, [id*="button"], [class*="button"]');
-          const spanElements = container.querySelectorAll('span, div');
+      console.log('Scanner started successfully');
+      setIsScanning(true);
 
-          selectElements.forEach(el => {
-            (el as HTMLElement).style.display = 'none !important';
-            (el as HTMLElement).style.visibility = 'hidden !important';
-          });
 
-          buttonElements.forEach(el => {
-            const text = el.textContent?.toLowerCase() || '';
-            if (text.includes('stop') || text.includes('camera') || text.includes('select')) {
-              (el as HTMLElement).style.display = 'none !important';
-              (el as HTMLElement).style.visibility = 'hidden !important';
-            }
-          });
-
-          spanElements.forEach(el => {
-            const text = el.textContent?.toLowerCase() || '';
-            if (text.includes('select camera') ||
-                text.includes('stop') ||
-                text.includes('camera permission') ||
-                text.includes('requesting')) {
-              (el as HTMLElement).style.display = 'none !important';
-              (el as HTMLElement).style.visibility = 'hidden !important';
-            }
-          });
-        }
-      };
-
-      // Multiple attempts để đảm bảo ẩn được UI
-      setTimeout(hideUIElements, 300);
-      setTimeout(hideUIElements, 800);
-      setTimeout(hideUIElements, 1500);
 
       setIsScanning(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Scanner initialization error:', err);
       setError('Không thể khởi tạo scanner. Vui lòng thử lại.');
     }
@@ -187,7 +156,11 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
   const handleClose = () => {
     if (scannerRef.current) {
-      scannerRef.current.clear().catch(console.error);
+      try {
+        scannerRef.current.stop();
+      } catch (err) {
+        console.error('Error stopping scanner:', err);
+      }
       scannerRef.current = null;
     }
     setIsScanning(false);
@@ -228,15 +201,16 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       setHasPermission(true);
       // initializeScanner will be called by useEffect when hasPermission changes
 
-    } catch (err: any) {
+    } catch (err) {
       console.error('Camera permission error:', err);
       setHasPermission(false);
 
-      if (err.name === 'NotAllowedError') {
+      const error = err as Error;
+      if (error.name === 'NotAllowedError') {
         setError('Quyền camera bị từ chối. Vui lòng cho phép truy cập camera và tải lại trang.');
-      } else if (err.name === 'NotFoundError') {
+      } else if (error.name === 'NotFoundError') {
         setError('Không tìm thấy camera. Vui lòng kiểm tra thiết bị camera.');
-      } else if (err.name === 'NotReadableError') {
+      } else if (error.name === 'NotReadableError') {
         setError('Camera đang được sử dụng bởi ứng dụng khác. Vui lòng đóng các ứng dụng khác và thử lại.');
       } else {
         setError('Không thể truy cập camera. Vui lòng kiểm tra quyền camera trong cài đặt trình duyệt.');
@@ -262,15 +236,41 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           visibility: hidden !important;
         }
 
-        /* Optimize video performance */
+        /* Force video visibility and proper sizing */
         #qr-scanner-container video {
-          border-radius: 0.75rem !important;
+          border-radius: 0.5rem !important;
           width: 100% !important;
           height: 100% !important;
+          max-height: none !important;
+          max-width: none !important;
           object-fit: cover !important;
           transform: translateZ(0) !important;
           backface-visibility: hidden !important;
           -webkit-backface-visibility: hidden !important;
+          background: transparent !important;
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          z-index: 1 !important;
+          position: relative !important;
+        }
+
+        /* Ensure scanner container is visible and properly sized */
+        #qr-scanner-container {
+          background: #000 !important;
+          min-height: 300px !important;
+          position: relative !important;
+          overflow: hidden !important;
+        }
+
+        /* Hide all scanner UI except video */
+        #qr-scanner-container > div:not([id*="reader"]) {
+          display: none !important;
+        }
+
+        #qr-scanner-container [id*="reader"] {
+          width: 100% !important;
+          height: 100% !important;
         }
 
         /* Safe area support */
@@ -397,7 +397,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                     disabled={!manualInput.trim()}
                     className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-4 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-lg"
                   >
-                    ✅ Xử lý mã QR
+                    ✅ Xác nhận
                   </button>
                   <button
                     onClick={() => setShowManualInput(false)}
@@ -424,16 +424,15 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                 </div>
               )}
 
-              {/* QR Scanner Container - Performance Optimized */}
-              <div className="relative flex-1 min-h-0 max-h-[60vh] sm:max-h-[70vh]">
+              {/* QR Scanner Container - Fixed for video display */}
+              <div className="relative flex-1 min-h-0">
                 <div
                   id="qr-scanner-container"
-                  className="w-full h-full rounded-lg sm:rounded-2xl overflow-hidden border border-white/20 shadow-2xl qr-scanner-custom bg-black/50"
+                  className="w-full h-full rounded-lg sm:rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-black"
                   style={{
-                    minHeight: '250px',
-                    maxHeight: '60vh',
-                    transform: 'translateZ(0)', // Hardware acceleration
-                    willChange: 'transform' // Optimize for animations
+                    minHeight: '300px',
+                    height: '400px',
+                    maxHeight: '60vh'
                   }}
                 />
 
@@ -475,20 +474,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           )}
         </div>
 
-        {/* Footer - Compact on mobile */}
-        <div className="p-3 sm:p-6 border-t border-white/10 bg-gradient-to-r from-purple-900/50 to-blue-900/50 safe-area-bottom">
-          <div className="text-center space-y-1 sm:space-y-2">
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-lg sm:text-2xl">💡</span>
-              <p className="text-white/80 font-medium text-sm sm:text-base">Mẹo quét QR hiệu quả</p>
-            </div>
-            <div className="text-white/60 text-xs sm:text-sm space-y-0.5 sm:space-y-1">
-              <p>• Giữ camera ổn định và đảm bảo ánh sáng đủ</p>
-              <p>• Đưa QR code vào giữa khung hình</p>
-              <p>• Khoảng cách 10-30cm là tối ưu</p>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
     </>
