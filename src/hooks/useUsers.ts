@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types';
+import { getLeaderboard, subscribeToLeaderboard, getUser, createUser } from '../lib/database';
 
-// Mock data cho demo
+// Mock data cho demo (fallback)
 const mockUsers: User[] = [
   {
     telegram: '@alice_dev',
@@ -40,13 +41,32 @@ export const useUsers = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setUsers(mockUsers.sort((a, b) => b.totalScore - a.totalScore));
-      setLoading(false);
-    }, 1000);
+    let unsubscribe: (() => void) | null = null;
 
-    return () => clearTimeout(timer);
+    const loadUsers = async () => {
+      try {
+        // Try real-time subscription first
+        unsubscribe = subscribeToLeaderboard((firebaseUsers) => {
+          setUsers(firebaseUsers);
+          setLoading(false);
+        });
+      } catch (error) {
+        console.error('Error loading users from Firebase:', error);
+        // Fallback to mock data
+        setTimeout(() => {
+          setUsers(mockUsers.sort((a, b) => b.totalScore - a.totalScore));
+          setLoading(false);
+        }, 1000);
+      }
+    };
+
+    loadUsers();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   return { users, loading };
@@ -62,30 +82,41 @@ export const useUser = (telegram: string) => {
       return;
     }
 
-    // Simulate loading
-    const timer = setTimeout(() => {
-      // Check if user exists in mock data
-      const existingUser = mockUsers.find(u => u.telegram === telegram);
-      
-      if (existingUser) {
-        setUser(existingUser);
-      } else {
-        // Create new user
-        const newUser: User = {
-          telegram,
-          totalScore: 0,
-          playedBooths: {},
-          createdAt: new Date()
-        };
-        setUser(newUser);
-        // In real app, this would save to database
-        mockUsers.push(newUser);
-      }
-      
-      setLoading(false);
-    }, 800);
+    const loadUser = async () => {
+      try {
+        // Try to get user from Firebase
+        let firebaseUser = await getUser(telegram);
 
-    return () => clearTimeout(timer);
+        if (!firebaseUser) {
+          // Create new user if doesn't exist
+          firebaseUser = await createUser(telegram);
+        }
+
+        setUser(firebaseUser);
+      } catch (error) {
+        console.error('Error loading user from Firebase:', error);
+
+        // Fallback to mock data or create local user
+        const existingUser = mockUsers.find(u => u.telegram === telegram);
+
+        if (existingUser) {
+          setUser(existingUser);
+        } else {
+          const newUser: User = {
+            telegram,
+            totalScore: 0,
+            playedBooths: {},
+            createdAt: new Date()
+          };
+          setUser(newUser);
+          mockUsers.push(newUser);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
   }, [telegram]);
 
   return { user, loading };
