@@ -1,21 +1,18 @@
 import React from 'react';
-import { User, CheckCircle, Circle, Star } from 'lucide-react';
+import { User, CheckCircle, Circle, Star, Clock } from 'lucide-react';
 import { User as UserType } from '../types';
+import { usePendingScores } from '../hooks/usePendingScores';
+import { booths } from '../data/booths';
 
 interface UserProgressProps {
   user: UserType;
 }
 
-const booths = [
-  { id: 'booth1', name: 'Coding Challenge', description: 'Giải thuật và lập trình', maxScore: 50 },
-  { id: 'booth2', name: 'Gaming Arena', description: 'Thi đấu game mobile', maxScore: 40 },
-  { id: 'booth3', name: 'Tech Quiz', description: 'Kiến thức công nghệ', maxScore: 30 },
-  { id: 'booth4', name: 'Design Battle', description: 'Thiết kế sáng tạo', maxScore: 45 },
-  { id: 'booth5', name: 'Startup Pitch', description: 'Thuyết trình ý tưởng', maxScore: 35 }
-];
-
 const UserProgress: React.FC<UserProgressProps> = ({ user }) => {
+  const { pendingScores } = usePendingScores(user.telegram);
+
   const completedBooths = Object.keys(user.playedBooths).filter(boothId => user.playedBooths[boothId]);
+  const pendingBooths = pendingScores.map(ps => ps.boothId);
   const completionRate = (completedBooths.length / booths.length) * 100;
 
   return (
@@ -55,38 +52,56 @@ const UserProgress: React.FC<UserProgressProps> = ({ user }) => {
       <div className="space-y-3">
         <h4 className="text-lg font-semibold text-white mb-4">Danh sách Booth</h4>
         {booths.map((booth) => {
-          const isCompleted = user.playedBooths[booth.id];
-          
+          const isCompleted = user.playedBooths[booth.id] || (user.scores && user.scores[booth.id] > 0);
+          const isPending = pendingBooths.includes(booth.id);
+          const userScore = user.scores?.[booth.id] || 0;
+
+          let bgClass, iconBg, icon, statusText, statusColor;
+
+          if (isCompleted) {
+            bgClass = 'bg-green-500/20 border border-green-500/30';
+            iconBg = 'bg-green-500';
+            icon = <CheckCircle className="h-5 w-5 text-white" />;
+            statusText = '✓ Đã hoàn thành';
+            statusColor = 'text-green-400';
+          } else if (isPending) {
+            bgClass = 'bg-yellow-500/20 border border-yellow-500/30';
+            iconBg = 'bg-yellow-500';
+            icon = <Clock className="h-5 w-5 text-white" />;
+            statusText = '⏳ Chờ phân bổ điểm';
+            statusColor = 'text-yellow-400';
+          } else {
+            bgClass = 'bg-white/5 hover:bg-white/10';
+            iconBg = 'bg-white/20';
+            icon = <Circle className="h-5 w-5 text-white/50" />;
+            statusText = '';
+            statusColor = '';
+          }
+
           return (
             <div
               key={booth.id}
-              className={`flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${
-                isCompleted 
-                  ? 'bg-green-500/20 border border-green-500/30' 
-                  : 'bg-white/5 hover:bg-white/10'
-              }`}
+              className={`flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${bgClass}`}
             >
               <div className="flex items-center space-x-4">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isCompleted ? 'bg-green-500' : 'bg-white/20'
-                }`}>
-                  {isCompleted ? (
-                    <CheckCircle className="h-5 w-5 text-white" />
-                  ) : (
-                    <Circle className="h-5 w-5 text-white/50" />
-                  )}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconBg}`}>
+                  {icon}
                 </div>
                 <div>
-                  <p className={`font-semibold ${isCompleted ? 'text-white' : 'text-white/90'}`}>
+                  <p className={`font-semibold ${isCompleted || isPending ? 'text-white' : 'text-white/90'}`}>
                     {booth.name}
                   </p>
                   <p className="text-white/60 text-sm">{booth.description}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-white/80 text-sm">Tối đa {booth.maxScore} điểm</p>
-                {isCompleted && (
-                  <p className="text-green-400 font-semibold text-sm">✓ Đã hoàn thành</p>
+                {isCompleted ? (
+                  <p className="text-white font-semibold">{userScore}/{booth.maxScore} điểm</p>
+                ) : (
+                  <p className="text-white/80 text-sm">Tối đa {booth.maxScore} điểm</p>
+                )}
+                {statusText && (
+                  <p className={`font-semibold text-sm ${statusColor}`}>{statusText}</p>
                 )}
               </div>
             </div>

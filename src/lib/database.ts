@@ -1,24 +1,27 @@
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  getDocs, 
-  query, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  query,
+  orderBy,
   limit,
   where,
   serverTimestamp,
   onSnapshot,
-  Timestamp
+  Timestamp,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { User } from '../types';
+import { User, PendingScore, BoothQR } from '../types';
 
 // Collections
 const USERS_COLLECTION = 'users';
 const QR_TOKENS_COLLECTION = 'qr-tokens';
+const PENDING_SCORES_COLLECTION = 'pending-scores';
+const BOOTH_QRS_COLLECTION = 'booth-qrs';
 
 // User operations
 export const createUser = async (telegram: string): Promise<User> => {
@@ -63,6 +66,7 @@ export const getUser = async (telegram: string): Promise<User | null> => {
     telegram: data.telegram,
     totalScore: data.totalScore || 0,
     playedBooths: data.playedBooths || {},
+    scores: data.scores || {},
     createdAt: data.createdAt?.toDate() || new Date()
   };
 };
@@ -146,6 +150,7 @@ export const subscribeToUser = (
         telegram: data.telegram,
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
+        scores: data.scores || {},
         createdAt: data.createdAt?.toDate() || new Date()
       };
       callback(user);
@@ -376,4 +381,194 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
     console.error('Cleanup error:', error);
     // Don't throw error to avoid breaking the app
   }
+};
+
+// PendingScore operations
+export const createPendingScore = async (boothId: string, userTelegram: string): Promise<string> => {
+  // Check if user already has pending score for this booth
+  const existingQuery = query(
+    collection(db, PENDING_SCORES_COLLECTION),
+    where('boothId', '==', boothId),
+    where('userTelegram', '==', userTelegram),
+    where('status', '==', 'waiting')
+  );
+
+  const existingDocs = await getDocs(existingQuery);
+  if (!existingDocs.empty) {
+    throw new Error('Bạn đã quét QR code của booth này và đang chờ phân bổ điểm');
+  }
+
+  // Check if user already completed this booth
+  const user = await getUser(userTelegram);
+  if (user && user.playedBooths[boothId]) {
+    throw new Error('Bạn đã hoàn thành booth này rồi');
+  }
+
+  const pendingId = `${boothId}_${userTelegram}_${Date.now()}`;
+  const pendingRef = doc(db, PENDING_SCORES_COLLECTION, pendingId);
+
+  const pendingScore: Omit<PendingScore, 'id'> = {
+    boothId,
+    userTelegram,
+    status: 'waiting',
+    createdAt: new Date()
+  };
+
+  await setDoc(pendingRef, {
+    ...pendingScore,
+    id: pendingId,
+    createdAt: serverTimestamp()
+  });
+
+  return pendingId;
+};
+
+export const getPendingScore = async (pendingId: string): Promise<PendingScore | null> => {
+  const pendingRef = doc(db, PENDING_SCORES_COLLECTION, pendingId);
+  const pendingDoc = await getDoc(pendingRef);
+
+  if (!pendingDoc.exists()) {
+    return null;
+  }
+
+  const data = pendingDoc.data();
+  return {
+    id: data.id,
+    boothId: data.boothId,
+    userTelegram: data.userTelegram,
+    status: data.status,
+    points: data.points,
+    createdAt: data.createdAt?.toDate() || new Date(),
+    completedAt: data.completedAt?.toDate(),
+    completedBy: data.completedBy
+  };
+};
+
+export const getPendingScoresByBooth = async (boothId: string): Promise<PendingScore[]> => {
+  const q = query(
+    collection(db, PENDING_SCORES_COLLECTION),
+    where('boothId', '==', boothId),
+    where('status', '==', 'waiting'),
+    orderBy('createdAt', 'desc')
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: data.id,
+      boothId: data.boothId,
+      userTelegram: data.userTelegram,
+      status: data.status,
+      points: data.points,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      completedAt: data.completedAt?.toDate(),
+      completedBy: data.completedBy
+    };
+  });
+};
+
+export const completePendingScore = async (
+  pendingId: string,
+  points: number,
+  adminTelegram: string
+): Promise<void> => {
+  const pendingRef = doc(db, PENDING_SCORES_COLLECTION, pendingId);
+  const pendingDoc = await getDoc(pendingRef);
+
+  if (!pendingDoc.exists()) {
+    throw new Error('Pending score not found');
+  }
+
+  const pendingData = pendingDoc.data();
+  if (pendingData.status !== 'waiting') {
+    throw new Error('Pending score already processed');
+  }
+
+  // Use batch for atomic operations
+  const batch = writeBatch(db);
+
+  // Update user score
+  const userRef = doc(db, USERS_COLLECTION, pendingData.userTelegram);
+  const userDoc = await getDoc(userRef);
+
+  if (userDoc.exists()) {
+    const userData = userDoc.data();
+    const currentScores = userData.scores || {};
+    const newScores = { ...currentScores, [pendingData.boothId]: points };
+    const newTotalScore = Object.values(newScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
+
+    batch.update(userRef, {
+      scores: newScores,
+      totalScore: newTotalScore,
+      [`playedBooths.${pendingData.boothId}`]: true, // Mark booth as completed
+      lastUpdated: serverTimestamp()
+    });
+  }
+
+  // Mark pending score as completed
+  batch.update(pendingRef, {
+    status: 'completed',
+    points,
+    completedAt: serverTimestamp(),
+    completedBy: adminTelegram
+  });
+
+  // Commit batch
+  await batch.commit();
+};
+
+export const subscribeToPendingScore = (
+  pendingId: string,
+  callback: (pendingScore: PendingScore | null) => void
+) => {
+  const pendingRef = doc(db, PENDING_SCORES_COLLECTION, pendingId);
+
+  return onSnapshot(pendingRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      const pendingScore: PendingScore = {
+        id: data.id,
+        boothId: data.boothId,
+        userTelegram: data.userTelegram,
+        status: data.status,
+        points: data.points,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        completedAt: data.completedAt?.toDate(),
+        completedBy: data.completedBy
+      };
+      callback(pendingScore);
+    } else {
+      callback(null);
+    }
+  });
+};
+
+export const subscribeToPendingScoresByBooth = (
+  boothId: string,
+  callback: (pendingScores: PendingScore[]) => void
+) => {
+  const q = query(
+    collection(db, PENDING_SCORES_COLLECTION),
+    where('boothId', '==', boothId),
+    where('status', '==', 'waiting'),
+    orderBy('createdAt', 'asc')
+  );
+
+  return onSnapshot(q, (querySnapshot) => {
+    const pendingScores = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: data.id,
+        boothId: data.boothId,
+        userTelegram: data.userTelegram,
+        status: data.status,
+        points: data.points,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        completedAt: data.completedAt?.toDate(),
+        completedBy: data.completedBy
+      };
+    });
+    callback(pendingScores);
+  });
 };

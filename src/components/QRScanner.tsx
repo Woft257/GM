@@ -123,7 +123,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       await scannerRef.current.start(
         cameraId,
         {
-          fps: 10,
+          fps: 5, // Giảm từ 10 xuống 5 để ít lỗi hơn
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0
         },
@@ -134,9 +134,11 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
           handleClose();
         },
         (errorMessage: string) => {
-          // Ignore frequent scan errors
+          // Ignore common scan errors that happen during normal scanning
           if (!errorMessage.includes('No QR code found') &&
-              !errorMessage.includes('NotFoundException')) {
+              !errorMessage.includes('NotFoundException') &&
+              !errorMessage.includes('No MultiFormat Readers') &&
+              !errorMessage.includes('parse error')) {
             console.warn('QR scan error:', errorMessage);
           }
         }

@@ -1,25 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { QrCode, Download, RefreshCw, Settings, Star, AlertCircle } from 'lucide-react';
+import { Users, Star, AlertCircle, CheckCircle, Clock, Trophy } from 'lucide-react';
 import Layout from '../components/Layout';
-import { generateQRCodeData, BOOTH_CONFIGS, BoothId } from '../lib/qrcode';
+import { subscribeToPendingScoresByBooth, completePendingScore } from '../lib/database';
+import { PendingScore } from '../types';
+import { booths } from '../data/booths';
 
 const AdminBoothPage: React.FC = () => {
   const { boothId } = useParams<{ boothId: string }>();
   const navigate = useNavigate();
-  
-  const [points, setPoints] = useState<number>(10);
-  const [qrData, setQrData] = useState<{
-    qrCodeDataURL: string;
-    tokenId: string;
-    qrData: string;
-    simpleCode: string;
-  } | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState<string>('');
 
-  // Validate booth ID
-  const booth = boothId && boothId in BOOTH_CONFIGS ? BOOTH_CONFIGS[boothId as BoothId] : null;
+  const [pendingScores, setPendingScores] = useState<PendingScore[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
+  const [adminTelegram] = useState<string>('admin'); // Fixed admin identifier
+
+  // Find booth info
+  const booth = booths.find(b => b.id === boothId);
+
+  useEffect(() => {
+    if (!booth) {
+      setError('Booth không tồn tại');
+      setLoading(false);
+      return;
+    }
+
+    // Subscribe to pending scores for this booth
+    const unsubscribe = subscribeToPendingScoresByBooth(boothId!, (scores) => {
+      setPendingScores(scores);
+      setLoading(false);
+    });
+
+    // Auto refresh every 5 seconds as backup
+    const refreshInterval = setInterval(() => {
+      console.log('Auto refreshing pending scores...');
+    }, 5000);
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+      clearInterval(refreshInterval);
+    };
+  }, [boothId, booth]);
+
+  const handleCompleteScore = async (pendingId: string, points: number) => {
+    if (points < 1 || points > (booth?.maxScore || 50)) {
+      alert(`Điểm số phải từ 1 đến ${booth?.maxScore || 50}`);
+      return;
+    }
+
+    setProcessingId(pendingId);
+    try {
+      await completePendingScore(pendingId, points, adminTelegram);
+      // Success - the subscription will update the list automatically
+    } catch (error: any) {
+      alert(error.message || 'Có lỗi xảy ra khi phân bổ điểm');
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   if (!booth) {
     return (
@@ -43,211 +84,217 @@ const AdminBoothPage: React.FC = () => {
     );
   }
 
-  const handleGenerateQR = async () => {
-    if (points < booth.minScore || points > booth.maxScore) {
-      setError(`Điểm số phải từ ${booth.minScore} đến ${booth.maxScore}`);
-      return;
-    }
-
-    setGenerating(true);
-    setError('');
-
-    try {
-      const result = await generateQRCodeData(booth.id, points);
-      setQrData(result);
-    } catch (error) {
-      console.error('Error generating QR code:', error);
-      setError('Có lỗi xảy ra khi tạo QR code');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const handleDownloadQR = () => {
-    if (!qrData) return;
-
-    const link = document.createElement('a');
-    link.download = `${booth.id}_${points}points_${Date.now()}.png`;
-    link.href = qrData.qrCodeDataURL;
-    link.click();
-  };
-
-  const handleNewQR = () => {
-    setQrData(null);
-    setError('');
-  };
-
-  const handlePointsChange = (value: number) => {
-    setPoints(value);
-    setError('');
-  };
+  if (loading) {
+    return (
+      <Layout title={`Admin - ${booth?.name || 'Loading...'}`}>
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mx-auto mb-6"></div>
+          <p className="text-white/70">Đang tải danh sách user...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title={`Admin - ${booth.name}`}>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Booth Info */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 mb-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
           <div className="flex items-center mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-4">
-              <Settings className="h-6 w-6 text-white" />
+              <Trophy className="h-6 w-6 text-white" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-white">{booth.name}</h3>
               <p className="text-white/70">{booth.description}</p>
             </div>
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-white/60 text-sm">Điểm tối thiểu</p>
-              <p className="text-white font-semibold">{booth.minScore}</p>
-            </div>
-            <div className="bg-white/5 rounded-lg p-3">
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white/5 rounded-lg p-3 text-center">
               <p className="text-white/60 text-sm">Điểm tối đa</p>
-              <p className="text-white font-semibold">{booth.maxScore}</p>
+              <p className="text-white font-semibold text-lg">{booth.maxScore}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3 text-center">
+              <p className="text-white/60 text-sm">Đang chờ</p>
+              <p className="text-yellow-400 font-semibold text-lg">{pendingScores.length}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3 text-center">
+              <p className="text-white/60 text-sm">Trạng thái</p>
+              <p className="text-green-400 font-semibold text-sm">Hoạt động</p>
             </div>
           </div>
         </div>
 
-        {/* QR Generator */}
+
+
+        {/* Pending Users List */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
           <h4 className="text-lg font-semibold text-white mb-6 flex items-center">
-            <QrCode className="h-5 w-5 mr-2" />
-            Tạo QR Code
+            <Clock className="h-5 w-5 mr-2" />
+            User đang chờ phân bổ điểm ({pendingScores.length})
           </h4>
 
-          {!qrData ? (
-            <div className="space-y-6">
-              {/* Points Input */}
-              <div>
-                <label className="block text-white/80 text-sm font-medium mb-2">
-                  Điểm số cho QR code này
-                </label>
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="number"
-                    min={booth.minScore}
-                    max={booth.maxScore}
-                    value={points}
-                    onChange={(e) => handlePointsChange(parseInt(e.target.value) || 0)}
-                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Nhập điểm số"
-                  />
-                  <div className="flex items-center text-white/70">
-                    <Star className="h-4 w-4 mr-1" />
-                    <span className="text-sm">điểm</span>
-                  </div>
-                </div>
-                <p className="text-white/60 text-sm mt-1">
-                  Từ {booth.minScore} đến {booth.maxScore} điểm
-                </p>
+          {pendingScores.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-white" />
               </div>
-
-              {/* Quick Points */}
-              <div>
-                <p className="text-white/80 text-sm font-medium mb-2">Chọn nhanh:</p>
-                <div className="flex flex-wrap gap-2">
-                  {[booth.minScore, Math.floor((booth.minScore + booth.maxScore) / 2), booth.maxScore].map((quickPoints) => (
-                    <button
-                      key={quickPoints}
-                      onClick={() => handlePointsChange(quickPoints)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        points === quickPoints
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-white/10 text-white/80 hover:bg-white/20'
-                      }`}
-                    >
-                      {quickPoints} điểm
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {error && (
-                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                  <p className="text-red-300 text-sm">{error}</p>
-                </div>
-              )}
-
-              <button
-                onClick={handleGenerateQR}
-                disabled={generating}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {generating ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Đang tạo QR code...
-                  </div>
-                ) : (
-                  'Tạo QR Code'
-                )}
-              </button>
+              <p className="text-white/70">Chưa có user nào đang chờ phân bổ điểm</p>
+              <p className="text-white/50 text-sm mt-2">User sẽ xuất hiện ở đây sau khi quét QR code booth</p>
             </div>
           ) : (
-            <div className="text-center space-y-6">
-              {/* QR Code Display */}
-              <div className="bg-white p-6 rounded-xl inline-block">
-                <img 
-                  src={qrData.qrCodeDataURL} 
-                  alt="QR Code" 
-                  className="w-64 h-64 mx-auto"
+            <div className="space-y-4">
+              {pendingScores.map((pending) => (
+                <PendingUserCard
+                  key={pending.id}
+                  pending={pending}
+                  booth={booth}
+                  onComplete={handleCompleteScore}
+                  processing={processingId === pending.id}
                 />
-              </div>
-
-              {/* QR Info */}
-              <div className="space-y-4">
-                <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30 rounded-xl p-4">
-                  <p className="text-green-300 font-semibold mb-2">Điểm số</p>
-                  <p className="text-white text-2xl font-bold">{points} điểm</p>
-                </div>
-
-                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-4">
-                  <p className="text-purple-300 font-semibold mb-2">Code</p>
-                  <p className="text-white text-3xl font-mono font-bold tracking-wider">{qrData.simpleCode}</p>
-                  <p className="text-white/60 text-sm mt-2">Nhập 6 số này nếu không quét được QR</p>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleDownloadQR}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Tải xuống
-                </button>
-                
-                <button
-                  onClick={handleNewQR}
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Tạo mới
-                </button>
-              </div>
-
-              <div className="text-center">
-                <p className="text-yellow-400 text-sm font-semibold">
-                  ⏰ QR code này chỉ sử dụng được 1 lần và có hiệu lực trong 15 phút
-                </p>
-              </div>
+              ))}
             </div>
           )}
         </div>
 
         {/* Navigation */}
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-x-4">
           <button
             onClick={() => navigate('/')}
             className="text-white/70 hover:text-white transition-colors duration-200"
           >
             ← Về trang chủ
           </button>
+          <button
+            onClick={() => navigate('/booth-qr')}
+            className="text-white/70 hover:text-white transition-colors duration-200"
+          >
+            Xem QR Codes →
+          </button>
         </div>
       </div>
     </Layout>
+  );
+};
+
+// Component for individual pending user
+interface PendingUserCardProps {
+  pending: PendingScore;
+  booth: any;
+  onComplete: (pendingId: string, points: number) => void;
+  processing: boolean;
+}
+
+const PendingUserCard: React.FC<PendingUserCardProps> = ({ pending, booth, onComplete, processing }) => {
+  const [points, setPoints] = useState<number>(booth.maxScore);
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  const handleSubmit = () => {
+    // Optimistic update
+    setIsCompleted(true);
+    onComplete(pending.id, points);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  return (
+    <div className={`border rounded-xl p-4 transition-all duration-300 ${
+      isCompleted
+        ? 'bg-green-500/20 border-green-500/30'
+        : 'bg-white/5 border-white/10'
+    }`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+            isCompleted
+              ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+              : 'bg-gradient-to-r from-blue-500 to-purple-500'
+          }`}>
+            <span className="text-white font-bold text-sm">
+              {pending.userTelegram.charAt(1).toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <p className="text-white font-semibold">{pending.userTelegram}</p>
+            <p className="text-white/60 text-sm">
+              {isCompleted ? `Hoàn thành - ${points} điểm` : `Chờ từ ${formatTime(pending.createdAt)}`}
+            </p>
+          </div>
+        </div>
+        <div className={`flex items-center ${isCompleted ? 'text-green-400' : 'text-yellow-400'}`}>
+          {isCompleted ? (
+            <>
+              <CheckCircle className="h-4 w-4 mr-1" />
+              <span className="text-sm">Hoàn thành</span>
+            </>
+          ) : (
+            <>
+              <Clock className="h-4 w-4 mr-1" />
+              <span className="text-sm">Đang chờ</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {!isCompleted && (
+        <div className="flex items-center space-x-3">
+          <div className="flex-1">
+            <label className="block text-white/80 text-sm font-medium mb-2">
+              Điểm số cho user này
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={booth.maxScore}
+              value={points}
+              onChange={(e) => setPoints(parseInt(e.target.value) || 1)}
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              disabled={processing}
+            />
+          </div>
+          <div className="flex space-x-2">
+            {[Math.floor(booth.maxScore * 0.5), Math.floor(booth.maxScore * 0.8), booth.maxScore].map((quickPoints) => (
+              <button
+                key={quickPoints}
+                onClick={() => setPoints(quickPoints)}
+                disabled={processing}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  points === quickPoints
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20'
+                } disabled:opacity-50`}
+              >
+                {quickPoints}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={processing}
+            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {processing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white mr-2"></div>
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Phân bổ
+              </>
+            )}
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 
