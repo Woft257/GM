@@ -44,12 +44,8 @@ const WaitingPage: React.FC = () => {
           return;
         }
 
-        // If completed, show success and redirect after shorter delay
-        if (updatedPendingScore.status === 'completed') {
-          setTimeout(() => {
-            navigate('/', { replace: true });
-          }, 2000); // Reduced from 3000ms to 2000ms
-        }
+        // If completed, just show success - user decides when to go home
+        // No auto redirect
         
         setLoading(false);
       } else {
@@ -146,14 +142,14 @@ const WaitingPage: React.FC = () => {
           </div>
 
           <p className="text-white/60 text-sm mb-6">
-            Tự động chuyển về trang chủ sau 2 giây...
+            Bạn có thể về trang chủ để tiếp tục hoặc ở lại để xem kết quả
           </p>
 
           <button
             onClick={handleGoHome}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-200 text-lg"
           >
-            Về trang chủ ngay
+            Về trang chủ
           </button>
         </div>
       </Layout>

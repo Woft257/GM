@@ -2,6 +2,7 @@ export interface User {
   telegram: string;
   totalScore: number;
   playedBooths: Record<string, boolean>;
+  scores?: Record<string, number>; // New field for booth scores
   createdAt: Date;
 }
 

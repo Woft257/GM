@@ -66,6 +66,7 @@ export const getUser = async (telegram: string): Promise<User | null> => {
     telegram: data.telegram,
     totalScore: data.totalScore || 0,
     playedBooths: data.playedBooths || {},
+    scores: data.scores || {},
     createdAt: data.createdAt?.toDate() || new Date()
   };
 };
