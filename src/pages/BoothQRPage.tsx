@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { QrCode, Download, Copy, CheckCircle } from 'lucide-react';
 import Layout from '../components/Layout';
 import { generateBoothQR } from '../lib/boothQR';
@@ -6,6 +7,7 @@ import { BoothQR } from '../types';
 import { booths } from '../data/booths';
 
 const BoothQRPage: React.FC = () => {
+  const navigate = useNavigate();
   const [boothQRs, setBoothQRs] = useState<Record<string, BoothQR>>({});
   const [loading, setLoading] = useState(true);
   const [copiedBooth, setCopiedBooth] = useState<string | null>(null);
@@ -144,6 +146,16 @@ const BoothQRPage: React.FC = () => {
             <p>4. Khi user quét QR, họ sẽ chờ admin nhập điểm</p>
             <p>5. Admin truy cập <strong>/admin/booth1</strong> để nhập điểm cho user</p>
           </div>
+        </div>
+
+        {/* Back to Dashboard */}
+        <div className="text-center mt-6">
+          <button
+            onClick={() => navigate('/admin')}
+            className="text-white/70 hover:text-white transition-colors text-sm sm:text-base"
+          >
+            ← Về Admin Dashboard
+          </button>
         </div>
       </div>
     </Layout>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trophy, Users, RotateCcw, AlertTriangle, Crown, Medal, Award } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
@@ -10,6 +11,7 @@ import {
 } from '../lib/gameControl';
 
 const EndPage: React.FC = () => {
+  const navigate = useNavigate();
   const { users, loading: usersLoading } = useUsers();
   const [gameStatus, setGameStatusState] = useState<GameStatus>('active');
   const [loading, setLoading] = useState(true);
@@ -64,11 +66,15 @@ const EndPage: React.FC = () => {
       await setGameStatus('active');
       setGameStatusState('active');
       setShowResetConfirm(false);
-      alert('Đã reset thành công! Game bắt đầu lại.');
+      alert('Đã reset thành công! Trang sẽ tự động tải lại.');
+
+      // Force reload to clear all client-side state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('Error resetting game:', error);
       alert('Có lỗi khi reset game');
-    } finally {
       setResetting(false);
     }
   };
@@ -271,6 +277,16 @@ const EndPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Back to Dashboard */}
+        <div className="text-center mt-6">
+          <button
+            onClick={() => navigate('/admin')}
+            className="text-white/70 hover:text-white transition-colors text-sm sm:text-base"
+          >
+            ← Về Admin Dashboard
+          </button>
+        </div>
       </div>
     </Layout>
   );

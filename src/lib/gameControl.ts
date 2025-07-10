@@ -60,11 +60,11 @@ export const isGameActive = async (): Promise<boolean> => {
 export const resetAllData = async (): Promise<void> => {
   try {
     console.log('Starting game reset...');
-    
+
     // Get all collections to delete
     const collections = [
       USERS_COLLECTION,
-      QR_TOKENS_COLLECTION, 
+      QR_TOKENS_COLLECTION,
       PENDING_SCORES_COLLECTION
     ];
 
@@ -76,7 +76,15 @@ export const resetAllData = async (): Promise<void> => {
 
     // Reset game status to active
     await setGameStatus('active');
-    
+
+    // Clear all localStorage data
+    localStorage.removeItem('telegram_username');
+    localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_auth_timestamp');
+
+    // Broadcast reset event to all tabs/windows
+    localStorage.setItem('game_reset_timestamp', Date.now().toString());
+
     console.log('Game reset completed successfully');
   } catch (error) {
     console.error('Error resetting game data:', error);

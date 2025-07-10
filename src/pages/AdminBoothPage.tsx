@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Users, Star, AlertCircle, CheckCircle, Clock, Trophy } from 'lucide-react';
 import Layout from '../components/Layout';
 import { subscribeToPendingScoresByBooth, completePendingScore } from '../lib/database';
@@ -9,6 +9,7 @@ import { booths } from '../data/booths';
 
 const AdminBoothPage: React.FC = () => {
   const { boothId } = useParams<{ boothId: string }>();
+  const navigate = useNavigate();
 
   const [pendingScores, setPendingScores] = useState<PendingScore[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,6 +163,15 @@ const AdminBoothPage: React.FC = () => {
           )}
         </div>
 
+        {/* Back to Dashboard */}
+        <div className="text-center mt-6">
+          <button
+            onClick={() => navigate('/admin')}
+            className="text-white/70 hover:text-white transition-colors text-sm sm:text-base"
+          >
+            ← Về Admin Dashboard
+          </button>
+        </div>
 
       </div>
     </Layout>

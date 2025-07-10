@@ -40,6 +40,20 @@ const HomePage: React.FC = () => {
     checkGameStatus();
   }, []);
 
+  // Listen for game reset events
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'game_reset_timestamp') {
+        // Game was reset, logout user and reload
+        logout();
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Calculate user ranking when users data changes
   useEffect(() => {
     if (user && users.length > 0) {
