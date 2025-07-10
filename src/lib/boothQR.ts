@@ -3,11 +3,10 @@ import { BoothQR } from '../types';
 
 // Generate static QR code for each booth
 export const generateBoothQR = async (boothId: string): Promise<BoothQR> => {
-  // Create static QR data for booth
+  // Create static QR data for booth (no timestamp for printing)
   const qrData = JSON.stringify({
     type: 'GM_VIETNAM_BOOTH',
     boothId,
-    timestamp: Date.now(),
     version: '2.0'
   });
 
