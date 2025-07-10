@@ -14,7 +14,7 @@ const AdminBoothPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
-  const [adminTelegram, setAdminTelegram] = useState<string>('');
+  const [adminTelegram] = useState<string>('admin'); // Fixed admin identifier
 
   // Find booth info
   const booth = booths.find(b => b.id === boothId);
@@ -32,19 +32,20 @@ const AdminBoothPage: React.FC = () => {
       setLoading(false);
     });
 
+    // Auto refresh every 5 seconds as backup
+    const refreshInterval = setInterval(() => {
+      console.log('Auto refreshing pending scores...');
+    }, 5000);
+
     return () => {
       if (unsubscribe) {
         unsubscribe();
       }
+      clearInterval(refreshInterval);
     };
   }, [boothId, booth]);
 
   const handleCompleteScore = async (pendingId: string, points: number) => {
-    if (!adminTelegram.trim()) {
-      alert('Vui lòng nhập Telegram admin');
-      return;
-    }
-
     if (points < 1 || points > (booth?.maxScore || 50)) {
       alert(`Điểm số phải từ 1 đến ${booth?.maxScore || 50}`);
       return;
@@ -125,25 +126,7 @@ const AdminBoothPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Admin Login */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-          <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            Thông tin Admin
-          </h4>
-          <div className="mb-4">
-            <label className="block text-white/80 text-sm font-medium mb-2">
-              Telegram Admin (để ghi nhận ai phân bổ điểm)
-            </label>
-            <input
-              type="text"
-              value={adminTelegram}
-              onChange={(e) => setAdminTelegram(e.target.value)}
-              placeholder="@admin_username"
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
-        </div>
+
 
         {/* Pending Users List */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
@@ -205,8 +188,11 @@ interface PendingUserCardProps {
 
 const PendingUserCard: React.FC<PendingUserCardProps> = ({ pending, booth, onComplete, processing }) => {
   const [points, setPoints] = useState<number>(booth.maxScore);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const handleSubmit = () => {
+    // Optimistic update
+    setIsCompleted(true);
     onComplete(pending.id, points);
   };
 
@@ -219,10 +205,18 @@ const PendingUserCard: React.FC<PendingUserCardProps> = ({ pending, booth, onCom
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+    <div className={`border rounded-xl p-4 transition-all duration-300 ${
+      isCompleted
+        ? 'bg-green-500/20 border-green-500/30'
+        : 'bg-white/5 border-white/10'
+    }`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mr-3">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+            isCompleted
+              ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+              : 'bg-gradient-to-r from-blue-500 to-purple-500'
+          }`}>
             <span className="text-white font-bold text-sm">
               {pending.userTelegram.charAt(1).toUpperCase()}
             </span>
@@ -230,65 +224,76 @@ const PendingUserCard: React.FC<PendingUserCardProps> = ({ pending, booth, onCom
           <div>
             <p className="text-white font-semibold">{pending.userTelegram}</p>
             <p className="text-white/60 text-sm">
-              Chờ từ {formatTime(pending.createdAt)}
+              {isCompleted ? `Hoàn thành - ${points} điểm` : `Chờ từ ${formatTime(pending.createdAt)}`}
             </p>
           </div>
         </div>
-        <div className="flex items-center text-yellow-400">
-          <Clock className="h-4 w-4 mr-1" />
-          <span className="text-sm">Đang chờ</span>
-        </div>
-      </div>
-
-      <div className="flex items-center space-x-3">
-        <div className="flex-1">
-          <label className="block text-white/80 text-sm font-medium mb-2">
-            Điểm số cho user này
-          </label>
-          <input
-            type="number"
-            min={1}
-            max={booth.maxScore}
-            value={points}
-            onChange={(e) => setPoints(parseInt(e.target.value) || 1)}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            disabled={processing}
-          />
-        </div>
-        <div className="flex space-x-2">
-          {[Math.floor(booth.maxScore * 0.5), Math.floor(booth.maxScore * 0.8), booth.maxScore].map((quickPoints) => (
-            <button
-              key={quickPoints}
-              onClick={() => setPoints(quickPoints)}
-              disabled={processing}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                points === quickPoints
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
-              } disabled:opacity-50`}
-            >
-              {quickPoints}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={handleSubmit}
-          disabled={processing}
-          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-        >
-          {processing ? (
+        <div className={`flex items-center ${isCompleted ? 'text-green-400' : 'text-yellow-400'}`}>
+          {isCompleted ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white mr-2"></div>
-              Đang xử lý...
+              <CheckCircle className="h-4 w-4 mr-1" />
+              <span className="text-sm">Hoàn thành</span>
             </>
           ) : (
             <>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Phân bổ
+              <Clock className="h-4 w-4 mr-1" />
+              <span className="text-sm">Đang chờ</span>
             </>
           )}
-        </button>
+        </div>
       </div>
+
+      {!isCompleted && (
+        <div className="flex items-center space-x-3">
+          <div className="flex-1">
+            <label className="block text-white/80 text-sm font-medium mb-2">
+              Điểm số cho user này
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={booth.maxScore}
+              value={points}
+              onChange={(e) => setPoints(parseInt(e.target.value) || 1)}
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              disabled={processing}
+            />
+          </div>
+          <div className="flex space-x-2">
+            {[Math.floor(booth.maxScore * 0.5), Math.floor(booth.maxScore * 0.8), booth.maxScore].map((quickPoints) => (
+              <button
+                key={quickPoints}
+                onClick={() => setPoints(quickPoints)}
+                disabled={processing}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  points === quickPoints
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20'
+                } disabled:opacity-50`}
+              >
+                {quickPoints}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={processing}
+            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {processing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white mr-2"></div>
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Phân bổ
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

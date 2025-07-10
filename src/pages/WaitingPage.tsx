@@ -16,6 +16,10 @@ const WaitingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
+  const handleGoHome = () => {
+    navigate('/', { replace: true });
+  };
+
   useEffect(() => {
     if (!pendingId) {
       setError('ID không hợp lệ');
@@ -40,11 +44,11 @@ const WaitingPage: React.FC = () => {
           return;
         }
 
-        // If completed, show success and redirect after delay
+        // If completed, show success and redirect after shorter delay
         if (updatedPendingScore.status === 'completed') {
           setTimeout(() => {
-            navigate('/');
-          }, 3000);
+            navigate('/', { replace: true });
+          }, 2000); // Reduced from 3000ms to 2000ms
         }
         
         setLoading(false);
@@ -63,10 +67,6 @@ const WaitingPage: React.FC = () => {
 
   const getBooth = (boothId: string) => {
     return booths.find(b => b.id === boothId);
-  };
-
-  const handleGoHome = () => {
-    navigate('/');
   };
 
   if (loading) {
@@ -146,7 +146,7 @@ const WaitingPage: React.FC = () => {
           </div>
 
           <p className="text-white/60 text-sm mb-6">
-            Tự động chuyển về trang chủ sau 3 giây...
+            Tự động chuyển về trang chủ sau 2 giây...
           </p>
 
           <button

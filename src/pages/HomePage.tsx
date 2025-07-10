@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import LoginForm from '../components/LoginForm';
 import Leaderboard from '../components/Leaderboard';
@@ -12,6 +13,7 @@ import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { QrCode, CheckCircle, XCircle } from 'lucide-react';
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const { username, login, isLoading: authLoading } = useAuth();
   const { users, loading: usersLoading } = useUsers();
   const { user, loading: userLoading } = useUser(username || '');
@@ -22,6 +24,7 @@ const HomePage: React.FC = () => {
     message: string;
     points?: number;
   } | null>(null);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
 
   if (authLoading) {
     return (
@@ -68,8 +71,8 @@ const HomePage: React.FC = () => {
         // Create pending score entry
         const pendingId = await createPendingScore(boothQRData.boothId, username);
 
-        // Navigate to waiting page
-        window.location.href = `/waiting/${pendingId}`;
+        // Navigate to waiting page using React Router
+        navigate(`/waiting/${pendingId}`);
         return;
       }
 
@@ -104,6 +107,23 @@ const HomePage: React.FC = () => {
 
   const handleCloseScanResult = () => {
     setScanResult(null);
+  };
+
+  const handleCloseQRScanner = () => {
+    setShowRejectConfirm(true);
+  };
+
+  const handleConfirmReject = () => {
+    setShowQRScanner(false);
+    setShowRejectConfirm(false);
+    setScanResult({
+      success: false,
+      message: 'Bạn đã từ chối quét QR code. Có thể thử lại bất cứ lúc nào!'
+    });
+  };
+
+  const handleCancelReject = () => {
+    setShowRejectConfirm(false);
   };
 
   if (!username) {
@@ -167,7 +187,7 @@ const HomePage: React.FC = () => {
       {/* QR Scanner Modal */}
       <QRScanner
         isOpen={showQRScanner}
-        onClose={() => setShowQRScanner(false)}
+        onClose={handleCloseQRScanner}
         onScanSuccess={handleQRScan}
       />
 
@@ -203,6 +223,32 @@ const HomePage: React.FC = () => {
               <button
                 onClick={handleCloseScanResult}
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Confirmation Modal */}
+      {showRejectConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 max-w-sm w-full">
+            <h3 className="text-xl font-bold text-white mb-4 text-center">Đóng QR Scanner?</h3>
+            <p className="text-white/70 text-center mb-6">
+              Bạn có chắc chắn muốn đóng QR Scanner không?
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleCancelReject}
+                className="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-semibold transition-all duration-200"
+              >
+                Tiếp tục quét
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold transition-all duration-200"
               >
                 Đóng
               </button>

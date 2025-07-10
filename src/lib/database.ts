@@ -1,17 +1,18 @@
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  getDocs, 
-  query, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  query,
+  orderBy,
   limit,
   where,
   serverTimestamp,
   onSnapshot,
-  Timestamp
+  Timestamp,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, PendingScore, BoothQR } from '../types';
@@ -482,16 +483,36 @@ export const completePendingScore = async (
     throw new Error('Pending score already processed');
   }
 
+  // Use batch for atomic operations
+  const batch = writeBatch(db);
+
   // Update user score
-  await updateUserScore(pendingData.userTelegram, pendingData.boothId, points);
+  const userRef = doc(db, USERS_COLLECTION, pendingData.userTelegram);
+  const userDoc = await getDoc(userRef);
+
+  if (userDoc.exists()) {
+    const userData = userDoc.data();
+    const currentScores = userData.scores || {};
+    const newScores = { ...currentScores, [pendingData.boothId]: points };
+    const newTotalScore = Object.values(newScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
+
+    batch.update(userRef, {
+      scores: newScores,
+      totalScore: newTotalScore,
+      lastUpdated: serverTimestamp()
+    });
+  }
 
   // Mark pending score as completed
-  await updateDoc(pendingRef, {
+  batch.update(pendingRef, {
     status: 'completed',
     points,
     completedAt: serverTimestamp(),
     completedBy: adminTelegram
   });
+
+  // Commit batch
+  await batch.commit();
 };
 
 export const subscribeToPendingScore = (
@@ -528,7 +549,7 @@ export const subscribeToPendingScoresByBooth = (
     collection(db, PENDING_SCORES_COLLECTION),
     where('boothId', '==', boothId),
     where('status', '==', 'waiting'),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'asc')
   );
 
   return onSnapshot(q, (querySnapshot) => {
