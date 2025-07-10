@@ -7,7 +7,8 @@ import QRScanner from '../components/QRScanner';
 import { useAuth } from '../hooks/useAuth';
 import { useUsers, useUser } from '../hooks/useUsers';
 import { parseQRData, validateQRData } from '../lib/qrcode';
-import { useQRToken, useQRTokenBySimpleCode } from '../lib/database';
+import { useQRToken, useQRTokenBySimpleCode, createPendingScore } from '../lib/database';
+import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { QrCode, CheckCircle, XCircle } from 'lucide-react';
 
 const HomePage: React.FC = () => {
@@ -45,7 +46,7 @@ const HomePage: React.FC = () => {
     }
 
     try {
-      // Check if it's a simple code
+      // Check if it's a simple code (old system)
       if (qrText.startsWith('SIMPLE_CODE:')) {
         const simpleCode = qrText.replace('SIMPLE_CODE:', '');
 
@@ -60,33 +61,37 @@ const HomePage: React.FC = () => {
         return;
       }
 
-      // Parse QR data
+      // Try to parse as booth QR (new system)
+      const boothQRData = parseBoothQRData(qrText);
+
+      if (boothQRData && validateBoothQRData(boothQRData)) {
+        // Create pending score entry
+        const pendingId = await createPendingScore(boothQRData.boothId, username);
+
+        // Navigate to waiting page
+        window.location.href = `/waiting/${pendingId}`;
+        return;
+      }
+
+      // Try to parse as old QR token system
       const qrData = parseQRData(qrText);
 
-      if (!qrData) {
+      if (qrData && validateQRData(qrData)) {
+        // Use QR token (old system)
+        const points = await useQRToken(qrData.tokenId, username);
+
         setScanResult({
-          success: false,
-          message: 'QR code không hợp lệ hoặc không phải QR code của GM Vietnam'
+          success: true,
+          message: `Chúc mừng! Bạn đã nhận được ${points} điểm từ ${qrData.boothId}`,
+          points
         });
         return;
       }
 
-      // Validate QR data
-      if (!validateQRData(qrData)) {
-        setScanResult({
-          success: false,
-          message: 'QR code đã hết hạn hoặc không hợp lệ'
-        });
-        return;
-      }
-
-      // Use QR token
-      const points = await useQRToken(qrData.tokenId, username);
-
+      // If nothing matches
       setScanResult({
-        success: true,
-        message: `Chúc mừng! Bạn đã nhận được ${points} điểm từ ${qrData.boothId}`,
-        points
+        success: false,
+        message: 'QR code không hợp lệ hoặc không phải QR code của GM Vietnam'
       });
 
     } catch (error: any) {

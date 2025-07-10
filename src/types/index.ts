@@ -31,3 +31,21 @@ export interface BoothConfig {
   maxScore: number;
   minScore: number;
 }
+
+export interface PendingScore {
+  id: string;
+  boothId: string;
+  userTelegram: string;
+  status: 'waiting' | 'completed' | 'cancelled';
+  points?: number; // Điểm được gán bởi admin
+  createdAt: Date;
+  completedAt?: Date;
+  completedBy?: string; // Admin telegram
+}
+
+export interface BoothQR {
+  boothId: string;
+  qrData: string; // QR code data cố định
+  qrCodeDataURL: string; // Base64 image của QR code
+  createdAt: Date;
+}
