@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import LoginForm from '../components/LoginForm';
@@ -10,21 +10,38 @@ import { useUsers, useUser } from '../hooks/useUsers';
 import { parseQRData, validateQRData } from '../lib/qrcode';
 import { useQRToken, useQRTokenBySimpleCode, createPendingScore } from '../lib/database';
 import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
-import { QrCode, CheckCircle, XCircle } from 'lucide-react';
+import { usePendingScores } from '../hooks/usePendingScores';
+import { getBoothName } from '../data/booths';
+import { QrCode, CheckCircle, XCircle, Clock, Trophy, Users, Star } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { username, login, isLoading: authLoading } = useAuth();
   const { users, loading: usersLoading } = useUsers();
   const { user, loading: userLoading } = useUser(username || '');
+  const { pendingScores } = usePendingScores(username);
 
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scanResult, setScanResult] = useState<{
     success: boolean;
     message: string;
     points?: number;
+    isPending?: boolean;
+    boothId?: string;
   } | null>(null);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+
+  // Monitor pending scores for real-time updates
+  useEffect(() => {
+    if (pendingScores.length === 0 && scanResult?.isPending) {
+      // Pending score was completed, show success message
+      setScanResult({
+        success: true,
+        message: `Chúc mừng! Bạn đã nhận được điểm từ ${getBoothName(scanResult.boothId || '')}!`,
+        points: undefined // Will be updated by user data refresh
+      });
+    }
+  }, [pendingScores, scanResult]);
 
   if (authLoading) {
     return (
@@ -71,8 +88,13 @@ const HomePage: React.FC = () => {
         // Create pending score entry
         const pendingId = await createPendingScore(boothQRData.boothId, username);
 
-        // Navigate to waiting page using React Router
-        navigate(`/waiting/${pendingId}`);
+        // Show success message and stay on home page
+        setScanResult({
+          success: true,
+          message: `Đã quét thành công booth ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
+          isPending: true,
+          boothId: boothQRData.boothId
+        });
         return;
       }
 
@@ -198,10 +220,18 @@ const HomePage: React.FC = () => {
             <div className="text-center">
               {scanResult.success ? (
                 <>
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-4">Thành công!</h3>
+                  {scanResult.isPending ? (
+                    <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Clock className="h-8 w-8 text-white" />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="h-8 w-8 text-white" />
+                    </div>
+                  )}
+                  <h3 className="text-xl font-bold text-white mb-4">
+                    {scanResult.isPending ? 'Đang chờ phân bổ điểm!' : 'Thành công!'}
+                  </h3>
                   {scanResult.points && (
                     <div className="flex items-center justify-center mb-4">
                       <span className="text-2xl font-bold text-white">+{scanResult.points}</span>
