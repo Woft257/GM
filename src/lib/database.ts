@@ -111,19 +111,38 @@ export const getLeaderboard = async (limitCount: number = 10): Promise<User[]> =
   const usersRef = collection(db, USERS_COLLECTION);
   const q = query(usersRef, orderBy('totalScore', 'desc'), limit(limitCount));
   const querySnapshot = await getDocs(q);
-  
+
   return querySnapshot.docs.map(doc => {
     const data = doc.data();
     return {
       telegram: data.telegram,
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
+      scores: data.scores || {},
       createdAt: data.createdAt?.toDate() || new Date()
     };
   });
 };
 
-// Real-time leaderboard subscription
+// Get ALL users (no limit)
+export const getAllUsers = async (): Promise<User[]> => {
+  const usersRef = collection(db, USERS_COLLECTION);
+  const q = query(usersRef, orderBy('totalScore', 'desc')); // No limit
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      telegram: data.telegram,
+      totalScore: data.totalScore || 0,
+      playedBooths: data.playedBooths || {},
+      scores: data.scores || {},
+      createdAt: data.createdAt?.toDate() || new Date()
+    };
+  });
+};
+
+// Real-time leaderboard subscription (limited)
 export const subscribeToLeaderboard = (
   callback: (users: User[]) => void,
   limitCount: number = 10
@@ -138,6 +157,29 @@ export const subscribeToLeaderboard = (
         telegram: data.telegram,
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
+        scores: data.scores || {},
+        createdAt: data.createdAt?.toDate() || new Date()
+      };
+    });
+    callback(users);
+  });
+};
+
+// Real-time ALL users subscription (no limit)
+export const subscribeToAllUsers = (
+  callback: (users: User[]) => void
+) => {
+  const usersRef = collection(db, USERS_COLLECTION);
+  const q = query(usersRef, orderBy('totalScore', 'desc')); // No limit
+
+  return onSnapshot(q, (querySnapshot) => {
+    const users = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        telegram: data.telegram,
+        totalScore: data.totalScore || 0,
+        playedBooths: data.playedBooths || {},
+        scores: data.scores || {},
         createdAt: data.createdAt?.toDate() || new Date()
       };
     });

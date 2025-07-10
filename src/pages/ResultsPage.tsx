@@ -32,7 +32,7 @@ const ResultsPage: React.FC = () => {
   const sortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
   const currentUser = sortedUsers.find(u => u.telegram === username);
   const currentUserRank = currentUser ? sortedUsers.findIndex(u => u.telegram === username) + 1 : null;
-  const winners = sortedUsers.slice(0, 3); // Top 3
+  const winners = sortedUsers.slice(0, 10); // Top 10
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -144,15 +144,15 @@ const ResultsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Top 3 Winners */}
+        {/* Top 10 Winners */}
         {gameEnded && (
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-white mb-2">🏆 Top 3 xuất sắc nhất</h2>
-              <p className="text-white/70">Những người chơi có thành tích cao nhất</p>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
+            <div className="text-center mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-2">🏆 Top 10 xuất sắc nhất</h2>
+              <p className="text-white/70 text-sm sm:text-base">Những người chơi có thành tích cao nhất</p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
               {winners.map((user, index) => (
                 <div
                   key={user.telegram}
@@ -160,13 +160,17 @@ const ResultsPage: React.FC = () => {
                     user.telegram === username ? 'ring-2 ring-purple-500' : ''
                   }`}
                 >
-                  <div className="flex justify-center mb-3">
-                    {getRankIcon(index + 1)}
+                  <div className="flex justify-center mb-2 sm:mb-3">
+                    {index < 3 ? getRankIcon(index + 1) : (
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <span className="text-white/80 font-bold text-sm sm:text-base">#{index + 1}</span>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-1">#{index + 1}</h3>
-                  <p className="text-white/90 font-semibold mb-2">{user.telegram}</p>
-                  <div className="text-xl font-bold text-white">{user.totalScore}</div>
-                  <p className="text-white/60 text-sm">điểm</p>
+                  {index < 3 && <h3 className="text-base sm:text-lg font-bold text-white mb-1">#{index + 1}</h3>}
+                  <p className="text-white/90 font-semibold mb-1 sm:mb-2 text-xs sm:text-sm">{user.telegram}</p>
+                  <div className="text-lg sm:text-xl font-bold text-white">{user.totalScore}</div>
+                  <p className="text-white/60 text-xs sm:text-sm">điểm</p>
                   {user.telegram === username && (
                     <div className="mt-2">
                       <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-xs">

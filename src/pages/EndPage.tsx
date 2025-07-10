@@ -75,7 +75,7 @@ const EndPage: React.FC = () => {
 
   // Sort users by score for final ranking
   const sortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
-  const winners = sortedUsers.slice(0, 3); // Top 3
+  const winners = sortedUsers.slice(0, 10); // Top 10
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -170,19 +170,23 @@ const EndPage: React.FC = () => {
           <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-white mb-2">🎉 Chúc mừng người thắng cuộc! 🎉</h2>
-              <p className="text-white/70">Top 3 người chơi xuất sắc nhất</p>
+              <p className="text-white/70">Top 10 người chơi xuất sắc nhất</p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {winners.map((user, index) => (
                 <div
                   key={user.telegram}
                   className={`p-6 rounded-xl border ${getRankBg(index + 1)} text-center`}
                 >
                   <div className="flex justify-center mb-3">
-                    {getRankIcon(index + 1)}
+                    {index < 3 ? getRankIcon(index + 1) : (
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <span className="text-white/80 font-bold text-lg">#{index + 1}</span>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-1">#{index + 1}</h3>
+                  {index < 3 && <h3 className="text-lg font-bold text-white mb-1">#{index + 1}</h3>}
                   <p className="text-white/90 font-semibold mb-2">{user.telegram}</p>
                   <div className="text-2xl font-bold text-white">{user.totalScore}</div>
                   <p className="text-white/60 text-sm">điểm</p>
@@ -195,7 +199,7 @@ const EndPage: React.FC = () => {
         {/* Full Leaderboard */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Bảng xếp hạng cuối cùng</h2>
+            <h2 className="text-xl font-bold text-white">Bảng xếp hạng Top 10</h2>
             <div className="flex items-center text-white/60">
               <Users className="h-5 w-5 mr-2" />
               <span>{users.length} người chơi</span>
@@ -203,7 +207,7 @@ const EndPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {sortedUsers.map((user, index) => (
+            {sortedUsers.slice(0, 10).map((user, index) => (
               <div
                 key={user.telegram}
                 className={`flex items-center justify-between p-4 rounded-xl ${
