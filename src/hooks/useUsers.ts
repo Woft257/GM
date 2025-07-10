@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types';
-import { getLeaderboard, subscribeToLeaderboard, getUser, createUser, subscribeToUser } from '../lib/database';
+import { getLeaderboard, getAllUsers, subscribeToLeaderboard, subscribeToAllUsers, getUser, createUser, subscribeToUser } from '../lib/database';
 
 // Mock data cho demo (fallback)
 const mockUsers: User[] = [
@@ -45,8 +45,8 @@ export const useUsers = () => {
 
     const loadUsers = async () => {
       try {
-        // Try real-time subscription first
-        unsubscribe = subscribeToLeaderboard((firebaseUsers) => {
+        // Use ALL users subscription (no limit)
+        unsubscribe = subscribeToAllUsers((firebaseUsers) => {
           setUsers(firebaseUsers);
           setLoading(false);
         });

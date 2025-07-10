@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, PendingScore, BoothQR } from '../types';
+import { isGameActive } from './gameControl';
 
 // Collections
 const USERS_COLLECTION = 'users';
@@ -27,29 +28,37 @@ const BOOTH_QRS_COLLECTION = 'booth-qrs';
 export const createUser = async (telegram: string): Promise<User> => {
   const userRef = doc(db, USERS_COLLECTION, telegram);
   const userDoc = await getDoc(userRef);
-  
+
   if (userDoc.exists()) {
     const data = userDoc.data();
     return {
       telegram: data.telegram,
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
+      scores: data.scores || {},
       createdAt: data.createdAt?.toDate() || new Date()
     };
   }
-  
+
+  // Check if game is still active before creating new user
+  const gameActive = await isGameActive();
+  if (!gameActive) {
+    throw new Error('Sự kiện đã kết thúc. Không thể đăng ký mới.');
+  }
+
   const newUser: User = {
     telegram,
     totalScore: 0,
     playedBooths: {},
+    scores: {},
     createdAt: new Date()
   };
-  
+
   await setDoc(userRef, {
     ...newUser,
     createdAt: serverTimestamp()
   });
-  
+
   return newUser;
 };
 
@@ -102,19 +111,38 @@ export const getLeaderboard = async (limitCount: number = 10): Promise<User[]> =
   const usersRef = collection(db, USERS_COLLECTION);
   const q = query(usersRef, orderBy('totalScore', 'desc'), limit(limitCount));
   const querySnapshot = await getDocs(q);
-  
+
   return querySnapshot.docs.map(doc => {
     const data = doc.data();
     return {
       telegram: data.telegram,
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
+      scores: data.scores || {},
       createdAt: data.createdAt?.toDate() || new Date()
     };
   });
 };
 
-// Real-time leaderboard subscription
+// Get ALL users (no limit)
+export const getAllUsers = async (): Promise<User[]> => {
+  const usersRef = collection(db, USERS_COLLECTION);
+  const q = query(usersRef, orderBy('totalScore', 'desc')); // No limit
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      telegram: data.telegram,
+      totalScore: data.totalScore || 0,
+      playedBooths: data.playedBooths || {},
+      scores: data.scores || {},
+      createdAt: data.createdAt?.toDate() || new Date()
+    };
+  });
+};
+
+// Real-time leaderboard subscription (limited)
 export const subscribeToLeaderboard = (
   callback: (users: User[]) => void,
   limitCount: number = 10
@@ -129,6 +157,29 @@ export const subscribeToLeaderboard = (
         telegram: data.telegram,
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
+        scores: data.scores || {},
+        createdAt: data.createdAt?.toDate() || new Date()
+      };
+    });
+    callback(users);
+  });
+};
+
+// Real-time ALL users subscription (no limit)
+export const subscribeToAllUsers = (
+  callback: (users: User[]) => void
+) => {
+  const usersRef = collection(db, USERS_COLLECTION);
+  const q = query(usersRef, orderBy('totalScore', 'desc')); // No limit
+
+  return onSnapshot(q, (querySnapshot) => {
+    const users = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        telegram: data.telegram,
+        totalScore: data.totalScore || 0,
+        playedBooths: data.playedBooths || {},
+        scores: data.scores || {},
         createdAt: data.createdAt?.toDate() || new Date()
       };
     });
