@@ -12,7 +12,8 @@ import { useQRToken, useQRTokenBySimpleCode, createPendingScore } from '../lib/d
 import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { usePendingScores } from '../hooks/usePendingScores';
 import { getBoothName } from '../data/booths';
-import { QrCode, CheckCircle, XCircle, Clock, Trophy, Users, Star } from 'lucide-react';
+import { QrCode, CheckCircle, XCircle, Clock, Trophy, Users, Star, Award, Eye } from 'lucide-react';
+import { isQRScanningAllowed, getGameStatus } from '../lib/gameControl';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +31,31 @@ const HomePage: React.FC = () => {
     boothId?: string;
   } | null>(null);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false);
+  const [userRank, setUserRank] = useState<number | null>(null);
+
+  // Check game status on load
+  useEffect(() => {
+    checkGameStatus();
+  }, []);
+
+  // Calculate user ranking when users data changes
+  useEffect(() => {
+    if (user && users.length > 0) {
+      const sortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
+      const rank = sortedUsers.findIndex(u => u.telegram === user.telegram) + 1;
+      setUserRank(rank);
+    }
+  }, [user, users]);
+
+  const checkGameStatus = async () => {
+    try {
+      const status = await getGameStatus();
+      setGameEnded(status === 'ended');
+    } catch (error) {
+      console.error('Error checking game status:', error);
+    }
+  };
 
   // Monitor pending scores for real-time updates
   useEffect(() => {
@@ -61,6 +87,16 @@ const HomePage: React.FC = () => {
       setScanResult({
         success: false,
         message: 'Vui lòng đăng nhập trước khi quét QR code'
+      });
+      return;
+    }
+
+    // Check if game is still active
+    const gameActive = await isQRScanningAllowed();
+    if (!gameActive) {
+      setScanResult({
+        success: false,
+        message: 'Sự kiện đã kết thúc. Không thể quét QR code nữa.'
       });
       return;
     }
@@ -160,18 +196,60 @@ const HomePage: React.FC = () => {
 
   return (
     <Layout title="Dashboard">
-      {/* Mobile QR Scan Button */}
+      {/* QR Scan Button or Game End Message */}
       <div className="text-center mb-6 sm:mb-8">
-        <button
-          onClick={() => setShowQRScanner(true)}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 sm:px-8 sm:py-4 rounded-2xl font-semibold active:from-purple-600 active:to-pink-600 transition-all duration-200 active:scale-95 flex items-center mx-auto shadow-lg touch-manipulation text-lg sm:text-xl"
-        >
-          <QrCode className="h-6 w-6 sm:h-7 sm:w-7 mr-3" />
-          Quét QR Code
-        </button>
-        <p className="text-white/60 text-sm sm:text-base mt-3">
-          Quét QR code tại các booth để nhận điểm
-        </p>
+        {!gameEnded ? (
+          <>
+            <button
+              onClick={() => setShowQRScanner(true)}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 sm:px-8 sm:py-4 rounded-2xl font-semibold active:from-purple-600 active:to-pink-600 transition-all duration-200 active:scale-95 flex items-center mx-auto shadow-lg touch-manipulation text-lg sm:text-xl"
+            >
+              <QrCode className="h-6 w-6 sm:h-7 sm:w-7 mr-3" />
+              Quét QR Code
+            </button>
+            <p className="text-white/60 text-sm sm:text-base mt-3">
+              Quét QR code tại các booth để nhận điểm
+            </p>
+          </>
+        ) : (
+          <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trophy className="h-8 w-8 text-white" />
+              </div>
+
+              {userRank && userRank <= 10 ? (
+                <>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    🎉 Chúc mừng! Bạn đứng thứ {userRank}! 🎉
+                  </h2>
+                  <p className="text-yellow-300 font-semibold mb-4">
+                    Bạn nằm trong Top 10 xuất sắc nhất!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold text-white mb-2">
+                    Sự kiện đã kết thúc!
+                  </h2>
+                  {userRank && (
+                    <p className="text-white/80 mb-4">
+                      Bạn đứng thứ {userRank} với {user?.totalScore || 0} điểm
+                    </p>
+                  )}
+                </>
+              )}
+
+              <button
+                onClick={() => navigate('/results')}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center mx-auto space-x-2"
+              >
+                <Eye className="h-5 w-5" />
+                <span>Xem kết quả chi tiết</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile-First Layout */}
