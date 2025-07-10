@@ -63,6 +63,30 @@ const ResultsPage: React.FC = () => {
     );
   }
 
+  // Block access if game is still active
+  if (!gameEnded) {
+    return (
+      <Layout title="Kết quả sự kiện">
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Trophy className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Sự kiện đang diễn ra</h2>
+          <p className="text-white/70 mb-6">
+            Kết quả sẽ được công bố sau khi sự kiện kết thúc. Hãy tiếp tục tham gia để tích lũy điểm!
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center mx-auto space-x-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span>Về trang chủ</span>
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Kết quả sự kiện">
       <div className="space-y-4 sm:space-y-6">

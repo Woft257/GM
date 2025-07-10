@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, PendingScore, BoothQR } from '../types';
+import { isGameActive } from './gameControl';
 
 // Collections
 const USERS_COLLECTION = 'users';
@@ -27,29 +28,37 @@ const BOOTH_QRS_COLLECTION = 'booth-qrs';
 export const createUser = async (telegram: string): Promise<User> => {
   const userRef = doc(db, USERS_COLLECTION, telegram);
   const userDoc = await getDoc(userRef);
-  
+
   if (userDoc.exists()) {
     const data = userDoc.data();
     return {
       telegram: data.telegram,
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
+      scores: data.scores || {},
       createdAt: data.createdAt?.toDate() || new Date()
     };
   }
-  
+
+  // Check if game is still active before creating new user
+  const gameActive = await isGameActive();
+  if (!gameActive) {
+    throw new Error('Sự kiện đã kết thúc. Không thể đăng ký mới.');
+  }
+
   const newUser: User = {
     telegram,
     totalScore: 0,
     playedBooths: {},
+    scores: {},
     createdAt: new Date()
   };
-  
+
   await setDoc(userRef, {
     ...newUser,
     createdAt: serverTimestamp()
   });
-  
+
   return newUser;
 };
 

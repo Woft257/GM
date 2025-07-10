@@ -23,9 +23,15 @@ export const useAuth = () => {
       // Save to localStorage
       localStorage.setItem('telegram_username', cleanUsername);
       setUsername(cleanUsername);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating user:', error);
-      // Fallback to localStorage only
+
+      // If game ended, don't allow login
+      if (error.message?.includes('Sự kiện đã kết thúc')) {
+        throw error; // Re-throw to be handled by UI
+      }
+
+      // For other errors, fallback to localStorage only
       localStorage.setItem('telegram_username', cleanUsername);
       setUsername(cleanUsername);
     }
