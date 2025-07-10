@@ -132,7 +132,9 @@ const HomePage: React.FC = () => {
   };
 
   const handleCloseQRScanner = () => {
-    setShowRejectConfirm(true);
+    // Close scanner directly without confirmation
+    // The confirmation was causing issues when camera permission was denied
+    setShowQRScanner(false);
   };
 
   const handleConfirmReject = () => {

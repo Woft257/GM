@@ -150,6 +150,7 @@ export const subscribeToUser = (
         telegram: data.telegram,
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
+        scores: data.scores || {},
         createdAt: data.createdAt?.toDate() || new Date()
       };
       callback(user);
@@ -500,6 +501,7 @@ export const completePendingScore = async (
     batch.update(userRef, {
       scores: newScores,
       totalScore: newTotalScore,
+      [`playedBooths.${pendingData.boothId}`]: true, // Mark booth as completed
       lastUpdated: serverTimestamp()
     });
   }
