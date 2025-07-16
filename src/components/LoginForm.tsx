@@ -20,51 +20,41 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto">
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-        <div className="text-center mb-6">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4">
-            <MessageCircle className="h-8 w-8 text-white" />
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <User className="h-5 w-5 text-gray-400" />
           </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Chào mừng đến GM Vietnam!</h3>
-          <p className="text-white/70">Nhập username Telegram để bắt đầu tham gia minigame</p>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="@username hoặc username"
+            className="w-full pl-12 pr-4 py-4 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all text-lg"
+            disabled={isLoading}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <User className="h-5 w-5 text-white/50" />
+        <button
+          type="submit"
+          disabled={!username.trim() || isLoading}
+          className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 text-white py-4 rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-500 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-blue-500/25 text-lg"
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Đang kết nối...
             </div>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="@username hoặc username"
-              className="w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-              disabled={isLoading}
-            />
-          </div>
+          ) : (
+            'Bắt đầu chơi'
+          )}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={!username.trim() || isLoading}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Đang kết nối...
-              </div>
-            ) : (
-              'Bắt đầu chơi'
-            )}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-white/60 text-sm">
-          <p>Bạn sẽ tham gia các minigame tại các booth khác nhau</p>
-          <p>và nhận điểm để lên bảng xếp hạng!</p>
-        </div>
+      <div className="mt-6 text-center text-gray-400 text-sm">
+        <p>Quét QR code tại các booth để nhận điểm</p>
+        <p>và tham gia bảng xếp hạng!</p>
       </div>
     </div>
   );
