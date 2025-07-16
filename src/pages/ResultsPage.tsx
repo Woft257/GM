@@ -66,8 +66,8 @@ const ResultsPage: React.FC = () => {
                 {/* X Symbol */}
                 <span className="text-white/60 text-xl font-bold">×</span>
 
-                {/* GM Vietnam Logo */}
-                <img src="/gm-vietnam-logo.svg" alt="GM Vietnam" className="h-8" />
+                {/* MEXC x GM Vietnam Collaboration Logo */}
+                <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-8" />
                 <span className="text-white font-semibold text-lg">- Kết quả</span>
               </div>
             </div>
@@ -99,8 +99,8 @@ const ResultsPage: React.FC = () => {
                 {/* X Symbol */}
                 <span className="text-white/60 text-xl font-bold">×</span>
 
-                {/* GM Vietnam Logo */}
-                <img src="/gm-vietnam-logo.svg" alt="GM Vietnam" className="h-8" />
+                {/* MEXC x GM Vietnam Collaboration Logo */}
+                <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-8" />
                 <span className="text-white font-semibold text-lg">- Kết quả</span>
               </div>
               <div className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-sm font-medium">
@@ -148,8 +148,8 @@ const ResultsPage: React.FC = () => {
               {/* X Symbol */}
               <span className="text-white/60 text-xl font-bold">×</span>
 
-              {/* GM Vietnam Logo */}
-              <img src="/gm-vietnam-logo.svg" alt="GM Vietnam" className="h-8" />
+              {/* MEXC x GM Vietnam Collaboration Logo */}
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-8" />
               <span className="text-white font-semibold text-lg">- Kết quả</span>
             </div>
             <div className="bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-sm font-medium">
