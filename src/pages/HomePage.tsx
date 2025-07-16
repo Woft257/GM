@@ -258,37 +258,35 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="text-center py-16">
+            <div className="px-4 py-8">
               {/* MEXC-style Login Hero */}
-              <div className="relative">
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-8 sm:p-12 shadow-2xl">
-                  <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <span className="text-white text-2xl font-bold">🎯</span>
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-                      Tham gia GM Vietnam
-                    </h1>
-                    <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                      Quét QR code tại các booth để nhận điểm và tham gia bảng xếp hạng
-                    </p>
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6 shadow-2xl">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-white text-xl font-bold">🎯</span>
                   </div>
+                  <h1 className="text-2xl font-bold text-white mb-2">
+                    Tham gia MEXC Minigame
+                  </h1>
+                  <p className="text-gray-400 text-sm mb-6">
+                    Quét QR code tại các booth để nhận điểm và tham gia bảng xếp hạng
+                  </p>
+                </div>
 
-                  <div className="max-w-md mx-auto">
-                    <LoginForm onLogin={async (username) => {
-                      try {
-                        setLoginError('');
-                        await login(username);
-                      } catch (error: any) {
-                        setLoginError(error.message || 'Có lỗi xảy ra khi đăng nhập');
-                      }
-                    }} />
-                    {loginError && (
-                      <div className="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
-                        <p className="text-red-300 text-sm text-center">{loginError}</p>
-                      </div>
-                    )}
-                  </div>
+                <div className="w-full">
+                  <LoginForm onLogin={async (username) => {
+                    try {
+                      setLoginError('');
+                      await login(username);
+                    } catch (error: any) {
+                      setLoginError(error.message || 'Có lỗi xảy ra khi đăng nhập');
+                    }
+                  }} />
+                  {loginError && (
+                    <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                      <p className="text-red-300 text-sm text-center">{loginError}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -302,48 +300,49 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen bg-black">
       {/* MEXC-style Header */}
       <div className="bg-black border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="max-w-7xl mx-auto px-3 py-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* MEXC Logo */}
-              <img src="/mexc-logo.svg" alt="MEXC" className="h-5" />
+              <img src="/mexc-logo.svg" alt="MEXC" className="h-4 sm:h-5" />
 
               {/* X Symbol */}
-              <span className="text-white/60 text-xl font-bold">×</span>
+              <span className="text-white/60 text-lg sm:text-xl font-bold">×</span>
 
               {/* GM Vietnam Logo */}
-              <img src="/gm-vietnam-logo.svg" alt="GM Vietnam" className="h-8" />
+              <img src="/gm-vietnam-logo.svg" alt="GM Vietnam" className="h-6 sm:h-8" />
             </div>
-            <div className="flex items-center space-x-4">
-              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
                 gameEnded
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                   : 'bg-green-500/20 text-green-400 border border-green-500/30'
               }`}>
-                {gameEnded ? '🔴 Đã kết thúc' : '🟢 Đang diễn ra'}
+                <span className="hidden sm:inline">{gameEnded ? '🔴 Đã kết thúc' : '🟢 Đang diễn ra'}</span>
+                <span className="sm:hidden">{gameEnded ? '🔴' : '🟢'}</span>
               </div>
-              <div className="bg-gray-800/50 px-3 py-1 rounded-lg border border-gray-700/50">
-                <span className="text-white font-semibold">{username.startsWith('@') ? username : `@${username}`}</span>
+              <div className="bg-gray-800/50 px-2 py-1 rounded border border-gray-700/50">
+                <span className="text-white font-medium text-xs sm:text-sm">{username.startsWith('@') ? username : `@${username}`}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Hero Section - QR Scan or Game End */}
         <div className="relative">
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 sm:p-8 text-center">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 sm:p-6 text-center">
             {!gameEnded ? (
           <>
             <button
               onClick={() => setShowQRScanner(true)}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-lg"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-base sm:text-lg"
             >
-              <QrCode className="h-6 w-6 sm:h-7 sm:w-7 mr-3" />
+              <QrCode className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
               Quét QR Code
             </button>
-            <p className="text-white/60 text-sm sm:text-base mt-3">
+            <p className="text-white/60 text-xs sm:text-sm mt-2 sm:mt-3">
               Quét QR code tại các booth để nhận điểm
             </p>
           </>
@@ -390,26 +389,26 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Mobile-First Layout */}
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-4 sm:space-y-6">
         {/* User Progress - Mobile First */}
         <div className="sm:hidden">
           {user && !userLoading && (
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3">
               <UserProgress user={user} />
             </div>
           )}
           {userLoading && (
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-3"></div>
-                <p className="text-gray-300 text-sm">Đang tải tiến trình...</p>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                <p className="text-gray-300 text-xs">Đang tải tiến trình...</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Leaderboard */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3 sm:p-6">
           <Leaderboard users={users} currentUser={user} loading={usersLoading} />
         </div>
 
