@@ -382,7 +382,11 @@ const HomePage: React.FC = () => {
         <div className="sm:hidden">
           {user && !userLoading && (
             <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3">
-              <UserProgress user={user} />
+              <UserProgress
+                user={user}
+                userRank={users.findIndex(u => u.telegram === user.telegram) + 1 || undefined}
+                totalUsers={users.length || undefined}
+              />
             </div>
           )}
           {userLoading && (
@@ -404,7 +408,11 @@ const HomePage: React.FC = () => {
         <div className="hidden sm:block">
           {user && !userLoading && (
             <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-              <UserProgress user={user} />
+              <UserProgress
+                user={user}
+                userRank={users.findIndex(u => u.telegram === user.telegram) + 1 || undefined}
+                totalUsers={users.length || undefined}
+              />
             </div>
           )}
           {userLoading && (
