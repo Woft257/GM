@@ -3,59 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import { Trophy, Users, RotateCcw, AlertTriangle, Crown, Medal, Award } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
-import { 
-  getGameStatus, 
-  setGameStatus, 
+import { useGameStatus } from '../hooks/useGameStatus';
+import {
+  setGameStatus,
   resetAllData,
-  GameStatus 
+  GameStatus
 } from '../lib/gameControl';
 
 const EndPage: React.FC = () => {
   const navigate = useNavigate();
   const { users, loading: usersLoading } = useUsers();
-  const [gameStatus, setGameStatusState] = useState<GameStatus>('active');
-  const [loading, setLoading] = useState(true);
+  const { gameStatus, loading } = useGameStatus();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting, setResetting] = useState(false);
-
-  useEffect(() => {
-    loadGameStatus();
-  }, []);
-
-  const loadGameStatus = async () => {
-    try {
-      const status = await getGameStatus();
-      setGameStatusState(status);
-    } catch (error) {
-      console.error('Error loading game status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [actionLoading, setActionLoading] = useState(false);
 
   const handleEndGame = async () => {
     try {
-      setLoading(true);
+      setActionLoading(true);
       await setGameStatus('ended');
-      setGameStatusState('ended');
     } catch (error) {
       console.error('Error ending game:', error);
       alert('Có lỗi khi kết thúc game');
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
   const handleStartGame = async () => {
     try {
-      setLoading(true);
+      setActionLoading(true);
       await setGameStatus('active');
-      setGameStatusState('active');
     } catch (error) {
       console.error('Error starting game:', error);
       alert('Có lỗi khi bắt đầu game');
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -64,7 +47,6 @@ const EndPage: React.FC = () => {
       setResetting(true);
       await resetAllData();
       await setGameStatus('active');
-      setGameStatusState('active');
       setShowResetConfirm(false);
       alert('Đã reset thành công! Trang sẽ tự động tải lại.');
 
@@ -143,26 +125,26 @@ const EndPage: React.FC = () => {
             {gameStatus === 'active' ? (
               <button
                 onClick={handleEndGame}
-                disabled={loading}
+                disabled={actionLoading}
                 className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 flex items-center justify-center space-x-2 touch-manipulation"
               >
                 <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-sm sm:text-base">Kết thúc sự kiện</span>
+                <span className="text-sm sm:text-base">{actionLoading ? 'Đang kết thúc...' : 'Kết thúc sự kiện'}</span>
               </button>
             ) : (
               <button
                 onClick={handleStartGame}
-                disabled={loading}
+                disabled={actionLoading}
                 className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 flex items-center justify-center space-x-2 touch-manipulation"
               >
                 <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-sm sm:text-base">Bắt đầu lại</span>
+                <span className="text-sm sm:text-base">{actionLoading ? 'Đang bắt đầu...' : 'Bắt đầu lại'}</span>
               </button>
             )}
 
             <button
               onClick={() => setShowResetConfirm(true)}
-              disabled={loading || resetting}
+              disabled={actionLoading || resetting}
               className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 flex items-center justify-center space-x-2 touch-manipulation"
             >
               <RotateCcw className="h-4 w-4 sm:h-5 sm:w-5" />

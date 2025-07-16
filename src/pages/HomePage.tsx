@@ -13,7 +13,8 @@ import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { usePendingScores } from '../hooks/usePendingScores';
 import { getBoothName } from '../data/booths';
 import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye } from 'lucide-react';
-import { isQRScanningAllowed, getGameStatus } from '../lib/gameControl';
+import { isQRScanningAllowed } from '../lib/gameControl';
+import { useGameStatus } from '../hooks/useGameStatus';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const HomePage: React.FC = () => {
   const { users, loading: usersLoading } = useUsers();
   const { user, loading: userLoading } = useUser(username || '');
   const { pendingScores } = usePendingScores(username);
+  const { gameStatus } = useGameStatus();
 
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scanResult, setScanResult] = useState<{
@@ -31,14 +33,11 @@ const HomePage: React.FC = () => {
     boothId?: string;
   } | null>(null);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
-  const [gameEnded, setGameEnded] = useState(false);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [loginError, setLoginError] = useState<string>('');
 
-  // Check game status on load
-  useEffect(() => {
-    checkGameStatus();
-  }, []);
+  // Game ended state derived from gameStatus
+  const gameEnded = gameStatus === 'ended';
 
   // Listen for game reset events
   useEffect(() => {
@@ -64,14 +63,7 @@ const HomePage: React.FC = () => {
     }
   }, [user, users]);
 
-  const checkGameStatus = async () => {
-    try {
-      const status = await getGameStatus();
-      setGameEnded(status === 'ended');
-    } catch (error) {
-      console.error('Error checking game status:', error);
-    }
-  };
+
 
   // Monitor pending scores for real-time updates
   useEffect(() => {
@@ -309,9 +301,7 @@ const HomePage: React.FC = () => {
                 <span className="hidden sm:inline">{gameEnded ? '🔴 Đã kết thúc' : '🟢 Đang diễn ra'}</span>
                 <span className="sm:hidden">{gameEnded ? '🔴' : '🟢'}</span>
               </div>
-              <div className="bg-gray-800/50 px-2 py-1 rounded border border-gray-700/50">
-                <span className="text-white font-medium text-xs sm:text-sm">{username.startsWith('@') ? username : `@${username}`}</span>
-              </div>
+
             </div>
           </div>
         </div>
@@ -335,28 +325,28 @@ const HomePage: React.FC = () => {
             </p>
           </>
         ) : (
-          <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
+          <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 sm:p-6">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trophy className="h-8 w-8 text-white" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
 
               {userRank && userRank <= 10 ? (
                 <>
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
                     🎉 Chúc mừng! Bạn đứng thứ {userRank}! 🎉
                   </h2>
-                  <p className="text-yellow-300 font-semibold mb-4">
+                  <p className="text-yellow-300 font-semibold mb-3 sm:mb-4 text-sm sm:text-base">
                     Bạn nằm trong Top 10 xuất sắc nhất!
                   </p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-xl font-bold text-white mb-2">
+                  <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
                     Sự kiện đã kết thúc!
                   </h2>
                   {userRank && (
-                    <p className="text-white/80 mb-4">
+                    <p className="text-white/80 mb-3 sm:mb-4 text-sm sm:text-base">
                       Bạn đứng thứ {userRank} với {user?.totalScore || 0} điểm
                     </p>
                   )}
@@ -365,9 +355,9 @@ const HomePage: React.FC = () => {
 
               <button
                 onClick={() => navigate('/results')}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center mx-auto space-x-2"
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold transition-all duration-200 flex items-center mx-auto space-x-2 text-sm sm:text-base shadow-lg shadow-blue-500/25"
               >
-                <Eye className="h-5 w-5" />
+                <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Xem kết quả chi tiết</span>
               </button>
             </div>

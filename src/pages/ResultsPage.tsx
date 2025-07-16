@@ -4,29 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../hooks/useAuth';
-import { getGameStatus } from '../lib/gameControl';
+import { useGameStatus } from '../hooks/useGameStatus';
 
 const ResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const { users, loading: usersLoading } = useUsers();
   const { username } = useAuth();
-  const [gameEnded, setGameEnded] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { gameStatus, loading } = useGameStatus();
 
-  useEffect(() => {
-    checkGameStatus();
-  }, []);
-
-  const checkGameStatus = async () => {
-    try {
-      const status = await getGameStatus();
-      setGameEnded(status === 'ended');
-    } catch (error) {
-      console.error('Error checking game status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Game ended state derived from gameStatus
+  const gameEnded = gameStatus === 'ended';
 
   // Sort users by score for final ranking
   const sortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
@@ -58,17 +45,10 @@ const ResultsPage: React.FC = () => {
         {/* MEXC-style Header */}
         <div className="bg-black border-b border-gray-800">
           <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                {/* MEXC Logo */}
-                <img src="/mexc-logo.svg" alt="MEXC" className="h-5" />
-
-                {/* X Symbol */}
-                <span className="text-white/60 text-xl font-bold">×</span>
-
+            <div className="flex items-center justify-center">
+              <div className="flex items-center">
                 {/* MEXC x GM Vietnam Collaboration Logo */}
-                <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-8" />
-                <span className="text-white font-semibold text-lg">- Kết quả</span>
+                <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
               </div>
             </div>
           </div>
@@ -91,20 +71,10 @@ const ResultsPage: React.FC = () => {
         {/* MEXC-style Header */}
         <div className="bg-black border-b border-gray-800">
           <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                {/* MEXC Logo */}
-                <img src="/mexc-logo.svg" alt="MEXC" className="h-5" />
-
-                {/* X Symbol */}
-                <span className="text-white/60 text-xl font-bold">×</span>
-
+            <div className="flex items-center justify-center">
+              <div className="flex items-center">
                 {/* MEXC x GM Vietnam Collaboration Logo */}
-                <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-8" />
-                <span className="text-white font-semibold text-lg">- Kết quả</span>
-              </div>
-              <div className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-sm font-medium">
-                🟢 Đang diễn ra
+                <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
               </div>
             </div>
           </div>
@@ -140,31 +110,39 @@ const ResultsPage: React.FC = () => {
       {/* MEXC-style Header */}
       <div className="bg-black border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {/* MEXC Logo */}
-              <img src="/mexc-logo.svg" alt="MEXC" className="h-5" />
-
-              {/* X Symbol */}
-              <span className="text-white/60 text-xl font-bold">×</span>
-
+          <div className="flex items-center justify-center">
+            <div className="flex items-center">
               {/* MEXC x GM Vietnam Collaboration Logo */}
-              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-8" />
-              <span className="text-white font-semibold text-lg">- Kết quả</span>
-            </div>
-            <div className="bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-sm font-medium">
-              🔴 Đã kết thúc
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header Section */}
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-3xl blur-3xl"></div>
-          <div className="relative bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 sm:p-8">
-            <div className="flex items-center justify-between">
+          <div className="relative bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 sm:p-6">
+            {/* Mobile Layout */}
+            <div className="sm:hidden">
+              <div className="text-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                  <Trophy className="h-6 w-6 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-white">Kết quả sự kiện</h1>
+              </div>
+              <button
+                onClick={() => navigate('/')}
+                className="w-full flex items-center justify-center space-x-2 text-gray-300 hover:text-white transition-colors bg-gray-700/50 hover:bg-gray-600/50 px-4 py-3 rounded-xl border border-gray-600/50"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                <span>Về trang chủ</span>
+              </button>
+            </div>
+
+            {/* Desktop Layout */}
+            <div className="hidden sm:flex items-center justify-between">
               <button
                 onClick={() => navigate('/')}
                 className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors bg-gray-700/50 hover:bg-gray-600/50 px-4 py-2 rounded-xl border border-gray-600/50"
@@ -189,13 +167,13 @@ const ResultsPage: React.FC = () => {
         {currentUser && currentUserRank && (
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-400/20 rounded-3xl blur-3xl"></div>
-            <div className="relative bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 sm:p-8">
+            <div className="relative bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 sm:p-6">
               <div className="text-center">
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">Kết quả của bạn</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Kết quả của bạn</h2>
 
                 {currentUserRank <= 10 ? (
-                  <div className="mb-6">
-                    <div className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
+                  <div className="mb-4 sm:mb-6">
+                    <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
                       #{currentUserRank}
                     </div>
                     <p className="text-yellow-300 font-semibold text-lg">🎉 Chúc mừng! Bạn nằm trong Top 10! 🎉</p>
@@ -207,18 +185,18 @@ const ResultsPage: React.FC = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-6 max-w-md mx-auto">
-                  <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
-                    <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-md mx-auto">
+                  <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-3 sm:p-4">
+                    <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                       {currentUser.totalScore}
                     </div>
-                    <p className="text-gray-400 text-sm mt-1">Tổng điểm</p>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-1">Tổng điểm</p>
                   </div>
-                  <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
-                    <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-3 sm:p-4">
+                    <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                       {Object.keys(currentUser.playedBooths || {}).length}
                     </div>
-                    <p className="text-gray-400 text-sm mt-1">Booth hoàn thành</p>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-1">Booth hoàn thành</p>
                   </div>
                 </div>
               </div>
@@ -228,17 +206,17 @@ const ResultsPage: React.FC = () => {
 
         {/* Top 10 Winners */}
         {gameEnded && (
-          <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 sm:p-8">
-            <div className="text-center mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">🏆 Top 10 xuất sắc nhất</h2>
-              <p className="text-gray-300 text-lg">Những người chơi có thành tích cao nhất</p>
+          <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 sm:p-6">
+            <div className="text-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">🏆 Top 10 xuất sắc nhất</h2>
+              <p className="text-gray-300 text-sm sm:text-base">Những người chơi có thành tích cao nhất</p>
             </div>
 
-            <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
               {winners.map((user, index) => (
                 <div
                   key={user.telegram}
-                  className={`relative p-5 rounded-2xl border text-center transition-all duration-200 hover:scale-105 ${
+                  className={`relative p-3 sm:p-4 rounded-2xl border text-center transition-all duration-200 hover:scale-105 ${
                     index === 0 ? 'bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-yellow-500/40' :
                     index === 1 ? 'bg-gradient-to-br from-gray-400/20 to-slate-400/20 border-gray-400/40' :
                     index === 2 ? 'bg-gradient-to-br from-amber-600/20 to-orange-500/20 border-amber-600/40' :
@@ -247,26 +225,26 @@ const ResultsPage: React.FC = () => {
                     user.telegram === username ? 'ring-2 ring-cyan-400' : ''
                   }`}
                 >
-                  <div className="flex justify-center mb-3">
+                  <div className="flex justify-center mb-2 sm:mb-3">
                     {index < 3 ? getRankIcon(index + 1) : (
-                      <div className="w-8 h-8 bg-gray-700/50 rounded-full flex items-center justify-center">
-                        <span className="text-gray-300 font-bold text-sm">#{index + 1}</span>
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-700/50 rounded-full flex items-center justify-center">
+                        <span className="text-gray-300 font-bold text-xs sm:text-sm">#{index + 1}</span>
                       </div>
                     )}
                   </div>
                   {index < 3 && (
-                    <h3 className="text-lg font-bold text-white mb-2">
+                    <h3 className="text-sm sm:text-lg font-bold text-white mb-1 sm:mb-2">
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'} #{index + 1}
                     </h3>
                   )}
-                  <p className="text-white font-semibold mb-3 text-sm truncate">{user.telegram}</p>
-                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-1">
+                  <p className="text-white font-semibold mb-2 sm:mb-3 text-xs sm:text-sm truncate">{user.telegram}</p>
+                  <div className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-1">
                     {user.totalScore}
                   </div>
                   <p className="text-gray-400 text-xs">điểm</p>
                   {user.telegram === username && (
-                    <div className="absolute -top-2 -right-2">
-                      <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
+                      <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-semibold">
                         Bạn
                       </span>
                     </div>
@@ -278,11 +256,11 @@ const ResultsPage: React.FC = () => {
         )}
 
         {/* Full Leaderboard */}
-        <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Bảng xếp hạng đầy đủ</h2>
-            <div className="flex items-center text-gray-300 bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700/50">
-              <Users className="h-5 w-5 mr-2" />
+        <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-2 sm:space-y-0">
+            <h2 className="text-lg sm:text-xl font-bold text-white">Bảng xếp hạng đầy đủ</h2>
+            <div className="flex items-center text-gray-300 bg-gray-800/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-gray-700/50 text-sm">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               <span className="font-semibold">{users.length} người chơi</span>
             </div>
           </div>

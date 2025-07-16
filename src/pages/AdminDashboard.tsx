@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Shield, 
-  Users, 
-  QrCode, 
-  Trophy, 
+import {
+  Shield,
+  Users,
+  QrCode,
+  Trophy,
   Settings,
   BarChart3,
   Clock,
@@ -12,29 +12,13 @@ import {
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
-import { getGameStatus } from '../lib/gameControl';
+import { useGameStatus } from '../hooks/useGameStatus';
 import { booths } from '../data/booths';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { users, loading: usersLoading } = useUsers();
-  const [gameStatus, setGameStatus] = useState<'active' | 'ended'>('active');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadGameStatus();
-  }, []);
-
-  const loadGameStatus = async () => {
-    try {
-      const status = await getGameStatus();
-      setGameStatus(status);
-    } catch (error) {
-      console.error('Error loading game status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { gameStatus, loading } = useGameStatus();
 
   // Calculate stats
   const totalUsers = users.length;
