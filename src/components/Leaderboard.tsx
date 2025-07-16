@@ -12,13 +12,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Crown className="h-5 w-5 text-yellow-500" />;
+        return <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />;
       case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />;
+        return <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />;
       case 3:
-        return <Award className="h-5 w-5 text-amber-600" />;
+        return <Award className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />;
       default:
-        return <span className="font-bold text-white/70">#{rank}</span>;
+        return <span className="font-bold text-white/70 text-xs sm:text-sm">#{rank}</span>;
     }
   };
 
@@ -53,42 +53,50 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
         <h3 className="text-lg sm:text-xl font-bold text-white">Bảng Xếp Hạng</h3>
       </div>
 
-      <div className="space-y-3">
-        {users.map((user, index) => {
+      <div className="space-y-2 sm:space-y-3">
+        {users.slice(0, 10).map((user, index) => {
           const rank = index + 1;
           const isCurrentUser = currentUser?.telegram === user.telegram;
-          
+
           return (
             <div
               key={user.telegram}
-              className={`flex items-center justify-between p-3 sm:p-4 rounded-xl transition-all duration-200 active:scale-98 ${
+              className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 active:scale-98 ${
                 isCurrentUser
                   ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30'
                   : 'bg-white/5 active:bg-white/10'
               }`}
             >
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r ${getRankColor(rank)} flex items-center justify-center`}>
+              <div className="flex items-center space-x-3">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r ${getRankColor(rank)} flex items-center justify-center flex-shrink-0`}>
                   {getRankIcon(rank)}
                 </div>
-                <div>
-                  <p className={`font-semibold text-sm sm:text-base ${isCurrentUser ? 'text-white' : 'text-white/90'}`}>
+                <div className="min-w-0 flex-1">
+                  <p className={`font-semibold text-sm sm:text-base truncate ${isCurrentUser ? 'text-white' : 'text-white/90'}`}>
                     {user.telegram}
-                    {isCurrentUser && <span className="ml-2 text-purple-300 text-xs sm:text-sm">(Bạn)</span>}
+                    {isCurrentUser && <span className="ml-2 text-purple-300 text-xs">(Bạn)</span>}
                   </p>
-                  <p className="text-white/60 text-xs sm:text-sm">
+                  <p className="text-white/60 text-xs">
                     {Object.keys(user.playedBooths).length} booth đã chơi
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg sm:text-2xl font-bold text-white">{user.totalScore}</p>
-                <p className="text-white/60 text-xs sm:text-sm">điểm</p>
+              <div className="text-right flex-shrink-0">
+                <p className="text-lg sm:text-xl font-bold text-white">{user.totalScore}</p>
+                <p className="text-white/60 text-xs">điểm</p>
               </div>
             </div>
           );
         })}
       </div>
+
+      {users.length > 10 && (
+        <div className="text-center mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <p className="text-blue-300 text-sm">
+            Hiển thị top 10 / {users.length} người chơi
+          </p>
+        </div>
+      )}
 
       {users.length === 0 && (
         <div className="text-center py-8">

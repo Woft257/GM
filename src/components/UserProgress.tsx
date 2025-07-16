@@ -6,9 +6,11 @@ import { booths } from '../data/booths';
 
 interface UserProgressProps {
   user: UserType;
+  userRank?: number;
+  totalUsers?: number;
 }
 
-const UserProgress: React.FC<UserProgressProps> = ({ user }) => {
+const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers }) => {
   const { pendingScores } = usePendingScores(user.telegram);
 
   const completedBooths = Object.keys(user.playedBooths).filter(boothId => user.playedBooths[boothId]);
@@ -24,7 +26,14 @@ const UserProgress: React.FC<UserProgressProps> = ({ user }) => {
           </div>
           <div>
             <h3 className="text-lg sm:text-xl font-bold text-white">{user.telegram}</h3>
-            <p className="text-white/70 text-sm sm:text-base">Tiến trình cá nhân</p>
+            <div className="flex items-center space-x-2">
+              <p className="text-white/70 text-sm">Tiến trình cá nhân</p>
+              {userRank && totalUsers && (
+                <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                  #{userRank}/{totalUsers}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="text-right">

@@ -12,7 +12,8 @@ import {
   serverTimestamp,
   onSnapshot,
   Timestamp,
-  writeBatch
+  writeBatch,
+  deleteField
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, PendingScore, BoothQR } from '../types';
@@ -622,4 +623,59 @@ export const subscribeToPendingScoresByBooth = (
     });
     callback(pendingScores);
   });
+};
+
+// Admin functions for score management
+export const updateUserScoreAdmin = async (telegram: string, boothId: string, points: number): Promise<void> => {
+  try {
+    const userRef = doc(db, USERS_COLLECTION, telegram);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const currentScores = userData.scores || {};
+      const newScores = { ...currentScores, [boothId]: points };
+      const newTotalScore = Object.values(newScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
+
+      await updateDoc(userRef, {
+        scores: newScores,
+        totalScore: newTotalScore,
+        [`playedBooths.${boothId}`]: true,
+        lastUpdated: serverTimestamp()
+      });
+    } else {
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    console.error('Error updating user score:', error);
+    throw error;
+  }
+};
+
+export const deleteUserScoreAdmin = async (telegram: string, boothId: string): Promise<void> => {
+  try {
+    const userRef = doc(db, USERS_COLLECTION, telegram);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const currentScores = userData.scores || {};
+      const newScores = { ...currentScores };
+      delete newScores[boothId];
+
+      const newTotalScore = Object.values(newScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
+
+      await updateDoc(userRef, {
+        scores: newScores,
+        totalScore: newTotalScore,
+        [`playedBooths.${boothId}`]: deleteField(),
+        lastUpdated: serverTimestamp()
+      });
+    } else {
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    console.error('Error deleting user score:', error);
+    throw error;
+  }
 };
