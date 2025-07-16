@@ -8,7 +8,8 @@ import {
   Settings,
   BarChart3,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Edit3
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
@@ -96,7 +97,7 @@ const AdminDashboard: React.FC = () => {
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 lg:p-6 border border-white/20">
           <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-3 sm:mb-4">Quản lý nhanh</h2>
 
-          <div className="grid gap-2 sm:gap-3 lg:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:gap-3 lg:gap-4 grid-cols-2 lg:grid-cols-4">
             {/* QR Management */}
             <button
               onClick={() => navigate('/admin/booth-qr')}
@@ -118,6 +119,18 @@ const AdminDashboard: React.FC = () => {
               <div className="text-left min-w-0">
                 <div className="text-xs sm:text-sm lg:text-base font-semibold">Kết thúc</div>
                 <div className="text-xs text-white/80 truncate">Quản lý sự kiện</div>
+              </div>
+            </button>
+
+            {/* Score Management */}
+            <button
+              onClick={() => navigate('/admin/scores')}
+              className="bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 active:from-yellow-800 active:to-amber-800 text-white p-3 sm:p-4 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 flex items-center space-x-2 sm:space-x-3 touch-manipulation active:scale-95"
+            >
+              <Edit3 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0" />
+              <div className="text-left min-w-0">
+                <div className="text-xs sm:text-sm lg:text-base font-semibold">Điểm số</div>
+                <div className="text-xs text-white/80 truncate">Chỉnh sửa điểm</div>
               </div>
             </button>
 
