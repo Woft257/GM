@@ -41,7 +41,7 @@ const ResultsPage: React.FC = () => {
 
   if (loading || usersLoading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen mexc-background">
         {/* MEXC-style Header */}
         <div className="bg-black border-b border-gray-800">
           <div className="max-w-7xl mx-auto px-4 py-3">
@@ -67,7 +67,7 @@ const ResultsPage: React.FC = () => {
   // Block access if game is still active
   if (!gameEnded) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen mexc-background">
         {/* MEXC-style Header */}
         <div className="bg-black border-b border-gray-800">
           <div className="max-w-7xl mx-auto px-4 py-3">
@@ -106,7 +106,7 @@ const ResultsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen mexc-background">
       {/* MEXC-style Header */}
       <div className="bg-black border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-3">
