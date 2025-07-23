@@ -69,14 +69,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center space-x-1 sm:space-x-2">
-                    <p className="font-semibold text-white text-sm sm:text-base truncate">{user.telegram}</p>
+                    <p className="font-semibold text-white text-base sm:text-lg truncate">{user.telegram}</p>
                     {isCurrentUser && (
-                      <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-semibold flex-shrink-0">
+                      <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-sm font-semibold flex-shrink-0">
                         Bạn
                       </span>
                     )}
                   </div>
-                  <p className="text-gray-400 text-xs sm:text-sm">
+                  <p className="text-gray-400 text-sm">
                     {Object.keys(user.playedBooths || {}).length} booth đã chơi
                   </p>
                 </div>
@@ -85,7 +85,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
                 <div className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   {user.totalScore}
                 </div>
-                <p className="text-gray-400 text-xs sm:text-sm">điểm</p>
+                <p className="text-gray-400 text-sm">điểm</p>
               </div>
             </div>
           );

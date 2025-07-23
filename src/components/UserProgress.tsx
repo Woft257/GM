@@ -25,11 +25,11 @@ const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers 
             <User className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg sm:text-xl font-bold text-white">{user.telegram}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold text-white">{user.telegram}</h3>
             <div className="flex items-center space-x-2">
-              <p className="text-gray-300 text-sm">Tiến trình cá nhân</p>
+              <p className="text-gray-300 text-base">Tiến trình cá nhân</p>
               {userRank && totalUsers && (
-                <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                <span className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-sm px-2 py-1 rounded-full font-semibold">
                   #{userRank}/{totalUsers}
                 </span>
               )}
@@ -97,7 +97,7 @@ const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers 
                   {icon}
                 </div>
                 <div>
-                  <p className={`font-semibold ${isCompleted || isPending ? 'text-white' : 'text-gray-200'}`}>
+                  <p className={`font-semibold text-base ${isCompleted || isPending ? 'text-white' : 'text-gray-200'}`}>
                     {booth.name}
                   </p>
                   <p className="text-gray-400 text-sm">{booth.description}</p>

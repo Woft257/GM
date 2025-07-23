@@ -339,12 +339,12 @@ const HomePage: React.FC = () => {
           <>
             <button
               onClick={() => setShowQRScanner(true)}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-sm sm:text-lg w-full max-w-xs sm:max-w-none sm:w-auto min-h-[48px]"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-base sm:text-lg w-full max-w-xs sm:max-w-none sm:w-auto min-h-[48px]"
             >
               <QrCode className="h-4 w-4 sm:h-6 sm:w-6 mr-2 flex-shrink-0" />
               <span>Quét QR Code</span>
             </button>
-            <p className="text-white/60 text-xs sm:text-sm mt-2 sm:mt-3">
+            <p className="text-white/60 text-sm sm:text-base mt-2 sm:mt-3">
               Quét QR code tại các booth để nhận điểm
             </p>
           </>
@@ -407,7 +407,7 @@ const HomePage: React.FC = () => {
             <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mx-auto mb-2"></div>
-                <p className="text-gray-300 text-xs">Đang tải tiến trình...</p>
+                <p className="text-gray-300 text-sm">Đang tải tiến trình...</p>
               </div>
             </div>
           )}
@@ -425,7 +425,7 @@ const HomePage: React.FC = () => {
               <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
                 <Gift className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
               </div>
-              <h3 className="text-base sm:text-xl font-bold text-white">Phần thưởng</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-white">Phần thưởng</h3>
             </div>
 
             <div className="grid gap-3 sm:gap-4">
@@ -466,10 +466,10 @@ const HomePage: React.FC = () => {
                               }`}>{reward.icon}</span>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h4 className={`text-xs sm:text-base font-semibold ${
+                              <h4 className={`text-sm sm:text-base font-semibold ${
                                 isClaimed || (isEligible && !hasAnyReward) ? 'text-white' : 'text-gray-500'
                               } truncate`}>{reward.name}</h4>
-                              <p className="text-gray-400 text-xs">
+                              <p className="text-gray-400 text-sm">
                                 {reward.minGames === reward.maxGames
                                   ? `${reward.minGames} minigame`
                                   : `${reward.minGames}+ minigames`}
@@ -482,14 +482,14 @@ const HomePage: React.FC = () => {
                                 <div className="w-5 h-5 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
                                   <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-green-400 text-xs sm:text-sm font-medium hidden sm:inline">Đã nhận</span>
+                                <span className="text-green-400 text-sm font-medium hidden sm:inline">Đã nhận</span>
                               </div>
                             ) : isEligible && !hasAnyReward ? (
                               <div className="flex items-center space-x-1 sm:space-x-2">
                                 <div className="w-5 h-5 sm:w-7 sm:h-7 bg-yellow-500 rounded-full flex items-center justify-center animate-pulse">
                                   <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-yellow-400 text-xs sm:text-sm font-medium hidden sm:inline">Đủ điều kiện</span>
+                                <span className="text-yellow-400 text-sm font-medium hidden sm:inline">Đủ điều kiện</span>
                               </div>
                             ) : (
                               <div className="w-5 h-5 sm:w-7 sm:h-7 bg-gray-600 rounded-full flex items-center justify-center">
