@@ -8,6 +8,8 @@ import EndPage from './pages/EndPage';
 import ResultsPage from './pages/ResultsPage';
 import AdminDashboard from './pages/AdminDashboard';
 import ScoreManagement from './pages/ScoreManagement';
+import RewardManagement from './pages/RewardManagement';
+import RewardDetails from './pages/RewardDetails';
 import AdminAuth from './components/AdminAuth';
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
         <Route path="/admin/:boothId" element={<AdminAuth><AdminBoothPage /></AdminAuth>} />
         <Route path="/admin/booth-qr" element={<AdminAuth><BoothQRPage /></AdminAuth>} />
         <Route path="/admin/booth/:boothId/allocate" element={<AdminAuth><BoothAllocationPage /></AdminAuth>} />
+        <Route path="/admin/rewards" element={<AdminAuth><RewardManagement /></AdminAuth>} />
+        <Route path="/admin/rewards/details" element={<AdminAuth><RewardDetails /></AdminAuth>} />
         <Route path="/admin/end" element={<AdminAuth><EndPage /></AdminAuth>} />
         <Route path="/admin/scores" element={<AdminAuth><ScoreManagement /></AdminAuth>} />
         <Route path="/results" element={<ResultsPage />} />

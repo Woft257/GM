@@ -9,7 +9,8 @@ import {
   BarChart3,
   Clock,
   CheckCircle,
-  Edit3
+  Edit3,
+  Gift
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
@@ -131,6 +132,18 @@ const AdminDashboard: React.FC = () => {
               <div className="text-left min-w-0">
                 <div className="text-xs sm:text-sm lg:text-base font-semibold">Điểm số</div>
                 <div className="text-xs text-white/80 truncate">Chỉnh sửa điểm</div>
+              </div>
+            </button>
+
+            {/* Reward Management */}
+            <button
+              onClick={() => navigate('/admin/rewards')}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:from-purple-800 active:to-pink-800 text-white p-3 sm:p-4 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 flex items-center space-x-2 sm:space-x-3 touch-manipulation active:scale-95"
+            >
+              <Gift className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 flex-shrink-0" />
+              <div className="text-left min-w-0">
+                <div className="text-xs sm:text-sm lg:text-base font-semibold">Phần thưởng</div>
+                <div className="text-xs text-white/80 truncate">Quản lý thưởng</div>
               </div>
             </button>
 

@@ -37,6 +37,7 @@ export const createUser = async (telegram: string): Promise<User> => {
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
       scores: data.scores || {},
+      rewards: data.rewards || {},
       createdAt: data.createdAt?.toDate() || new Date()
     };
   }
@@ -52,6 +53,7 @@ export const createUser = async (telegram: string): Promise<User> => {
     totalScore: 0,
     playedBooths: {},
     scores: {},
+    rewards: {},
     createdAt: new Date()
   };
 
@@ -181,6 +183,7 @@ export const subscribeToAllUsers = (
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
         scores: data.scores || {},
+        rewards: data.rewards || {},
         createdAt: data.createdAt?.toDate() || new Date()
       };
     });
@@ -203,6 +206,7 @@ export const subscribeToUser = (
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
         scores: data.scores || {},
+        rewards: data.rewards || {},
         createdAt: data.createdAt?.toDate() || new Date()
       };
       callback(user);
@@ -725,6 +729,34 @@ export const allocateScore = async (username: string, boothId: string, minigameI
     await batch.commit();
   } catch (error) {
     console.error('Error allocating score:', error);
+    throw error;
+  }
+};
+
+// Update user reward status
+export const updateUserReward = async (username: string, rewardId: string, claimed: boolean): Promise<void> => {
+  try {
+    const userRef = doc(db, USERS_COLLECTION, username);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    const currentRewards = userData.rewards || {};
+
+    const newRewards = {
+      ...currentRewards,
+      [rewardId]: claimed
+    };
+
+    await updateDoc(userRef, {
+      rewards: newRewards,
+      lastUpdated: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating user reward:', error);
     throw error;
   }
 };
