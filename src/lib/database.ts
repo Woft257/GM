@@ -679,3 +679,56 @@ export const deleteUserScoreAdmin = async (telegram: string, boothId: string): P
     throw error;
   }
 };
+
+// Allocate score for a specific minigame
+export const allocateScore = async (username: string, boothId: string, minigameId: string, score: number): Promise<void> => {
+  try {
+    const batch = writeBatch(db);
+
+    // Update user's score
+    const userRef = doc(db, USERS_COLLECTION, username);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      throw new Error('User not found');
+    }
+
+    const userData = userDoc.data();
+    const currentScores = userData.scores || {};
+    const currentTotalScore = userData.totalScore || 0;
+
+    // Update minigame score
+    const newScores = {
+      ...currentScores,
+      [minigameId]: score
+    };
+
+    // Calculate new total score
+    const newTotalScore = Object.values(newScores).reduce((sum: number, s: any) => sum + (s || 0), 0);
+
+    // Update user document
+    batch.update(userRef, {
+      scores: newScores,
+      totalScore: newTotalScore,
+      [`playedBooths.${boothId}`]: true,
+      lastUpdated: serverTimestamp()
+    });
+
+    // Remove pending score
+    const pendingScoresQuery = query(
+      collection(db, PENDING_SCORES_COLLECTION),
+      where('username', '==', username),
+      where('boothId', '==', boothId)
+    );
+
+    const pendingScoresSnapshot = await getDocs(pendingScoresQuery);
+    pendingScoresSnapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Error allocating score:', error);
+    throw error;
+  }
+};

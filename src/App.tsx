@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import AdminBoothPage from './pages/AdminBoothPage';
 import BoothQRPage from './pages/BoothQRPage';
+import BoothAllocationPage from './pages/BoothAllocationPage';
 import EndPage from './pages/EndPage';
 import ResultsPage from './pages/ResultsPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -17,6 +18,7 @@ function App() {
         <Route path="/admin" element={<AdminAuth><AdminDashboard /></AdminAuth>} />
         <Route path="/admin/:boothId" element={<AdminAuth><AdminBoothPage /></AdminAuth>} />
         <Route path="/admin/booth-qr" element={<AdminAuth><BoothQRPage /></AdminAuth>} />
+        <Route path="/admin/booth/:boothId/allocate" element={<AdminAuth><BoothAllocationPage /></AdminAuth>} />
         <Route path="/admin/end" element={<AdminAuth><EndPage /></AdminAuth>} />
         <Route path="/admin/scores" element={<AdminAuth><ScoreManagement /></AdminAuth>} />
         <Route path="/results" element={<ResultsPage />} />

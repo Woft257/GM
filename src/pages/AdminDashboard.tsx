@@ -150,25 +150,25 @@ const AdminDashboard: React.FC = () => {
 
         {/* Booth Management - Mobile Optimized */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 lg:p-6 border border-white/20">
-          <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-3 sm:mb-4">Quản lý Booth</h2>
+          <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-3 sm:mb-4">Phân bổ điểm Booth</h2>
 
           <div className="grid gap-2 sm:gap-3 lg:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {booths.map((booth) => (
               <button
                 key={booth.id}
-                onClick={() => navigate(`/admin/${booth.id}`)}
-                className="bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 hover:border-white/20 text-white p-3 sm:p-4 rounded-lg sm:rounded-xl transition-all duration-200 text-left touch-manipulation active:scale-95"
+                onClick={() => navigate(`/admin/booth/${booth.id}/allocate`)}
+                className="bg-gradient-to-r from-blue-600/20 to-cyan-400/20 hover:from-blue-600/30 hover:to-cyan-400/30 border border-blue-500/30 hover:border-blue-400/50 text-white p-3 sm:p-4 rounded-lg sm:rounded-xl transition-all duration-200 text-left touch-manipulation active:scale-95"
               >
                 <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white font-bold text-xs sm:text-sm">{booth.id.slice(-1)}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-xs sm:text-sm lg:text-base truncate">{booth.name}</div>
-                    <div className="text-xs text-white/60">Max: {booth.maxScore} điểm</div>
+                    <div className="text-xs text-blue-300">Max: {booth.maxScore} điểm</div>
                   </div>
                 </div>
-                <p className="text-white/70 text-xs sm:text-sm line-clamp-2 leading-relaxed">
+                <p className="text-gray-300 text-xs sm:text-sm line-clamp-2 leading-relaxed">
                   {booth.description}
                 </p>
               </button>
