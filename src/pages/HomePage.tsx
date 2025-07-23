@@ -5,6 +5,7 @@ import LoginForm from '../components/LoginForm';
 import Leaderboard from '../components/Leaderboard';
 import UserProgress from '../components/UserProgress';
 import QRScanner from '../components/QRScanner';
+import MexcBackground from '../components/MexcBackground';
 import { useAuth } from '../hooks/useAuth';
 import { useUsers, useUser } from '../hooks/useUsers';
 import { parseQRData, validateQRData } from '../lib/qrcode';
@@ -220,7 +221,7 @@ const HomePage: React.FC = () => {
 
   if (!username) {
     return (
-      <div className="min-h-screen bg-black">
+      <MexcBackground>
         {/* MEXC-style Header */}
         <div className="bg-black/20 backdrop-blur-sm border-b border-gray-700/50">
           <div className="max-w-7xl mx-auto px-4 py-3">
@@ -302,36 +303,35 @@ const HomePage: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </MexcBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* MEXC-style Header */}
-      <div className="bg-black border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-3 py-2">
+    <MexcBackground>
+      {/* MEXC-style Header - Mobile Optimized */}
+      <div className="bg-black border-b border-gray-800 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-2 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               {/* MEXC x GM Vietnam Collaboration Logo */}
-              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-5 sm:h-8" />
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
+            <div className="flex items-center space-x-1 sm:space-x-4">
+              <div className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-medium ${
                 gameEnded
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                   : 'bg-green-500/20 text-green-400 border border-green-500/30'
               }`}>
                 <span className="hidden sm:inline">{gameEnded ? '🔴 Đã kết thúc' : '🟢 Đang diễn ra'}</span>
-                <span className="sm:hidden">{gameEnded ? '🔴' : '🟢'}</span>
+                <span className="sm:hidden text-xs">{gameEnded ? '🔴' : '🟢'}</span>
               </div>
-
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="max-w-6xl mx-auto px-2 sm:px-4 py-3 sm:py-6 space-y-3 sm:space-y-6">
         {/* Hero Section - QR Scan or Game End */}
         <div className="relative">
           <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 sm:p-6 text-center">
@@ -339,10 +339,10 @@ const HomePage: React.FC = () => {
           <>
             <button
               onClick={() => setShowQRScanner(true)}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-base sm:text-lg"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-sm sm:text-lg w-full max-w-xs sm:max-w-none sm:w-auto min-h-[48px]"
             >
-              <QrCode className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-              Quét QR Code
+              <QrCode className="h-4 w-4 sm:h-6 sm:w-6 mr-2 flex-shrink-0" />
+              <span>Quét QR Code</span>
             </button>
             <p className="text-white/60 text-xs sm:text-sm mt-2 sm:mt-3">
               Quét QR code tại các booth để nhận điểm
@@ -420,12 +420,12 @@ const HomePage: React.FC = () => {
 
         {/* Rewards Section */}
         {user && !gameEnded && (
-          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 rounded-xl p-4 sm:p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-center space-x-3 mb-4 sm:mb-6">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-                <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-6 backdrop-blur-sm">
+            <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-3 sm:mb-6">
+              <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                <Gift className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-white">Phần thưởng</h3>
+              <h3 className="text-base sm:text-xl font-bold text-white">Phần thưởng</h3>
             </div>
 
             <div className="grid gap-3 sm:gap-4">
@@ -446,53 +446,53 @@ const HomePage: React.FC = () => {
                   const isEligible = completedMinigames >= reward.minGames;
 
                   return (
-                    <div key={index} className={`relative overflow-hidden rounded-xl border transition-all duration-300 ${
+                    <div key={index} className={`relative overflow-hidden rounded-lg sm:rounded-xl border transition-all duration-300 ${
                       isClaimed
                         ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/40 shadow-lg shadow-green-500/10'
                         : isEligible && !hasAnyReward
                           ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-400/40 shadow-lg shadow-yellow-500/10'
                           : 'bg-gradient-to-r from-gray-800/40 to-gray-700/20 border-gray-600/20 opacity-60'
                     }`}>
-                      <div className="p-4 sm:p-5">
+                      <div className="p-3 sm:p-5">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3 sm:space-x-4">
-                            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r ${
+                          <div className="flex items-center space-x-2 sm:space-x-4">
+                            <div className={`w-8 h-8 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r ${
                               isClaimed || (isEligible && !hasAnyReward) ? reward.color : 'from-gray-600 to-gray-500'
                             } flex items-center justify-center ${
                               isClaimed || (isEligible && !hasAnyReward) ? reward.shadow : 'shadow-gray-500/10'
-                            } shadow-lg`}>
-                              <span className={`text-xl sm:text-2xl ${
+                            } shadow-lg flex-shrink-0`}>
+                              <span className={`text-sm sm:text-2xl ${
                                 isClaimed || (isEligible && !hasAnyReward) ? '' : 'grayscale opacity-60'
                               }`}>{reward.icon}</span>
                             </div>
-                            <div>
-                              <h4 className={`text-sm sm:text-base font-semibold ${
+                            <div className="min-w-0 flex-1">
+                              <h4 className={`text-xs sm:text-base font-semibold ${
                                 isClaimed || (isEligible && !hasAnyReward) ? 'text-white' : 'text-gray-500'
-                              }`}>{reward.name}</h4>
-                              <p className="text-gray-400 text-xs sm:text-sm">
+                              } truncate`}>{reward.name}</h4>
+                              <p className="text-gray-400 text-xs">
                                 {reward.minGames === reward.maxGames
                                   ? `${reward.minGames} minigame`
                                   : `${reward.minGames}+ minigames`}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right flex-shrink-0">
                             {isClaimed ? (
-                              <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
+                              <div className="flex items-center space-x-1 sm:space-x-2">
+                                <div className="w-5 h-5 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
                                   <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-green-400 text-xs sm:text-sm font-medium">Đã nhận</span>
+                                <span className="text-green-400 text-xs sm:text-sm font-medium hidden sm:inline">Đã nhận</span>
                               </div>
                             ) : isEligible && !hasAnyReward ? (
-                              <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-yellow-500 rounded-full flex items-center justify-center animate-pulse">
+                              <div className="flex items-center space-x-1 sm:space-x-2">
+                                <div className="w-5 h-5 sm:w-7 sm:h-7 bg-yellow-500 rounded-full flex items-center justify-center animate-pulse">
                                   <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                                 </div>
-                                <span className="text-yellow-400 text-xs sm:text-sm font-medium">Đủ điều kiện</span>
+                                <span className="text-yellow-400 text-xs sm:text-sm font-medium hidden sm:inline">Đủ điều kiện</span>
                               </div>
                             ) : (
-                              <div className="w-6 h-6 sm:w-7 sm:h-7 bg-gray-600 rounded-full flex items-center justify-center">
+                              <div className="w-5 h-5 sm:w-7 sm:h-7 bg-gray-600 rounded-full flex items-center justify-center">
                                 <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                               </div>
                             )}
@@ -651,7 +651,7 @@ const HomePage: React.FC = () => {
         </div>
       )}
       </div>
-    </div>
+    </MexcBackground>
   );
 };
 
