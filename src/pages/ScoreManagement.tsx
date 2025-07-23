@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Trash2, Edit3, X } from 'lucide-react';
-import Layout from '../components/Layout';
+
 import { useUsers, useUser } from '../hooks/useUsers';
 import { updateUserScoreAdmin, deleteUserScoreAdmin } from '../lib/database';
 import { booths } from '../data/booths';
@@ -142,30 +142,41 @@ const ScoreManagement: React.FC = () => {
   const totalScore = Object.values(scores).reduce((sum, score) => sum + (score || 0), 0);
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
-          {/* Header */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => navigate('/admin')}
-                  className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  <ArrowLeft className="h-5 w-5 text-white" />
-                </button>
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-white">Quản lý điểm số</h1>
-                  <p className="text-white/70 text-sm">Chỉnh sửa điểm từng booth cho user</p>
-                </div>
-              </div>
+    <div className="min-h-screen bg-black">
+      {/* MEXC-style Header */}
+      <div className="bg-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-white/70 hover:text-white text-sm"
+              >
+                ← Về Dashboard
+              </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <Edit3 className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">Quản lý điểm số</h1>
+          <p className="text-white/70 text-sm sm:text-base">
+            Chỉnh sửa điểm từng booth cho user
+          </p>
+        </div>
 
           {/* Search User */}
           {!selectedUser && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 mb-4 sm:mb-6">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 mb-4 sm:mb-6">
               <h2 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">Tìm kiếm user</h2>
               <div className="relative">
                 <input
@@ -173,7 +184,7 @@ const ScoreManagement: React.FC = () => {
                   value={searchUsername}
                   onChange={(e) => handleSearchInputChange(e.target.value)}
                   placeholder="Nhập username để tìm kiếm và lọc danh sách..."
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 sm:px-4 sm:py-3 pr-10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 sm:px-4 sm:py-3 pr-10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 />
                 {searchUsername && (
                   <button
@@ -213,7 +224,7 @@ const ScoreManagement: React.FC = () => {
 
           {/* User Info & Scores */}
           {selectedUser && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
               {/* Header with Back Button */}
               <div className="flex items-center justify-between mb-4">
                 <button
@@ -306,7 +317,7 @@ const ScoreManagement: React.FC = () => {
                           value={scores[booth.id] || ''}
                           onChange={(e) => handleScoreChange(booth.id, e.target.value)}
                           placeholder="0"
-                          className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                         />
                         {currentUser?.scores?.[booth.id] && (
                           <p className="text-xs text-white/50 mt-1">
@@ -349,7 +360,7 @@ const ScoreManagement: React.FC = () => {
 
           {/* Filtered User List */}
           {!selectedUser && filteredUsers.length > 0 && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
               <h2 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">
                 {searchUsername ? `Kết quả tìm kiếm (${filteredUsers.length})` : `Danh sách user (${filteredUsers.length})`}
               </h2>
@@ -358,7 +369,7 @@ const ScoreManagement: React.FC = () => {
                   <button
                     key={user.telegram}
                     onClick={() => setSelectedUser(user.telegram)}
-                    className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-lg transition-colors text-left touch-manipulation"
+                    className="w-full flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-700/50 active:bg-gray-600/50 border border-gray-700 rounded-lg transition-colors text-left touch-manipulation"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
@@ -391,7 +402,7 @@ const ScoreManagement: React.FC = () => {
 
           {/* No Results */}
           {!selectedUser && searchUsername && filteredUsers.length === 0 && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 text-center">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 text-center">
               <div className="text-4xl mb-3">🔍</div>
               <h3 className="text-lg font-bold text-white mb-2">Không tìm thấy user nào</h3>
               <p className="text-white/70 text-sm mb-4">
@@ -405,9 +416,8 @@ const ScoreManagement: React.FC = () => {
               </button>
             </div>
           )}
-        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

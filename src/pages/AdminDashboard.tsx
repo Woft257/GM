@@ -70,6 +70,16 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Admin Dashboard Title */}
+        <div className="text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+          <p className="text-white/70 text-sm sm:text-base">
+            Quản lý sự kiện GM Vietnam
+          </p>
+        </div>
 
         {/* Stats Overview - Mobile First */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">

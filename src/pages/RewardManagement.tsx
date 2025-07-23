@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
 import { updateUserReward } from '../lib/database';
-import Layout from '../components/Layout';
+
 
 const RewardManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -84,18 +84,40 @@ const RewardManagement: React.FC = () => {
   };
 
   return (
-    <Layout title="Quản lý Phần thưởng">
-      <div className="max-w-6xl mx-auto">
-        {/* Header Actions */}
-        <div className="mb-8 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-          <button
-            onClick={() => navigate('/admin')}
-            className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-lg"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Quay lại Dashboard</span>
-          </button>
+    <div className="min-h-screen bg-black">
+      {/* MEXC-style Header */}
+      <div className="bg-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-white/70 hover:text-white text-sm"
+              >
+                ← Về Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">Quản lý Phần thưởng</h1>
+          <p className="text-white/70 text-sm sm:text-base">
+            Quản lý và phân phát phần thưởng cho người chơi
+          </p>
+        </div>
+
+        {/* Header Actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <button
               onClick={() => navigate('/admin/rewards/details')}
@@ -104,7 +126,7 @@ const RewardManagement: React.FC = () => {
               <Trophy className="h-4 w-4" />
               <span>Chi tiết</span>
             </button>
-            <div className="flex items-center text-white/80 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-lg">
+            <div className="flex items-center text-white/80 bg-gray-900/50 border border-gray-800 px-4 py-2 rounded-lg">
               <Users className="h-4 w-4 mr-2" />
               <span className="font-medium">{users.length} người chơi</span>
             </div>
@@ -139,7 +161,7 @@ const RewardManagement: React.FC = () => {
               placeholder="Tìm kiếm người chơi..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-lg pl-10 pr-10 py-3 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-10 py-3 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             />
             {searchTerm && (
               <button
@@ -185,7 +207,7 @@ const RewardManagement: React.FC = () => {
               const claimedUsers = getClaimedUsers(milestone.id);
 
               return (
-                <div key={milestone.id} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
+                <div key={milestone.id} className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
@@ -250,7 +272,7 @@ const RewardManagement: React.FC = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </div>
   );
 };
 
