@@ -63,8 +63,11 @@ const BoothAllocationPage: React.FC = () => {
     if (allocatingUser) return;
 
     const score = scores[username]?.[minigameId] || 0;
-    if (score < 0 || score > 50) {
-      setNotification({ type: 'error', message: 'Điểm phải từ 0 đến 50' });
+    const minigame = boothMinigames.find(m => m?.id === minigameId);
+    const maxScore = minigame?.maxScore || 50;
+
+    if (score < 0 || score > maxScore) {
+      setNotification({ type: 'error', message: `Điểm phải từ 0 đến ${maxScore}` });
       setTimeout(() => setNotification(null), 3000);
       return;
     }
@@ -201,20 +204,25 @@ const BoothAllocationPage: React.FC = () => {
 
                         {availableMinigames.length > 0 ? (
                           <>
-                            <p className="text-gray-300 text-sm">Chọn minigame và nhập điểm (0-50):</p>
+                            <p className="text-gray-300 text-sm">Chọn minigame và nhập điểm:</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {availableMinigames.map((minigame, idx) => (
                                 <div key={minigame?.id || `available-${idx}`} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                  <h4 className="font-semibold text-white mb-3 text-center">{minigame?.name}</h4>
+                                  <h4 className="font-semibold text-white mb-2 text-center">{minigame?.name}</h4>
+                                  {minigame?.maxScore !== 999999 && (
+                                    <p className="text-gray-400 text-xs text-center mb-3">
+                                      Tối đa: {minigame?.maxScore} điểm
+                                    </p>
+                                  )}
                                   <div className="space-y-3">
                                     <div className="flex items-center space-x-2">
                                       <input
                                         type="number"
                                         min="0"
-                                        max="50"
+                                        max={minigame?.maxScore === 999999 ? undefined : minigame?.maxScore}
                                         value={scores[pendingScore.username]?.[minigame?.id || ''] || ''}
                                         onChange={(e) => handleScoreChange(pendingScore.username, minigame?.id || '', e.target.value)}
-                                        placeholder="Nhập điểm"
+                                        placeholder={minigame?.maxScore === 999999 ? 'Nhập điểm' : `Nhập điểm (0-${minigame?.maxScore})`}
                                         className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         disabled={allocatingUser === pendingScore.username}
                                       />

@@ -4,39 +4,39 @@ import { Booth } from '../types';
 export const booths: Booth[] = [
   {
     id: 'minigame1',
-    name: 'Minigame 1',
+    name: 'Treasure Hunt',
     maxScore: 50,
-    description: 'Thử thách đầu tiên'
+    description: 'Săn tìm kho báu'
   },
   {
     id: 'minigame2',
-    name: 'Minigame 2',
-    maxScore: 50,
-    description: 'Thử thách thứ hai'
+    name: 'Bắt sóng token',
+    maxScore: 999999, // Không có điểm tối đa
+    description: 'Thu thập token'
   },
   {
     id: 'minigame3',
-    name: 'Minigame 3',
-    maxScore: 50,
-    description: 'Thử thách thứ ba'
+    name: 'Vượt chướng ngại phí',
+    maxScore: 100,
+    description: 'Vượt qua thử thách'
   },
   {
     id: 'minigame4',
-    name: 'Minigame 4',
-    maxScore: 50,
-    description: 'Thử thách thứ tư'
+    name: 'Săn thưởng đa chuỗi',
+    maxScore: 70,
+    description: 'Khám phá đa chuỗi'
   },
   {
     id: 'minigame5',
-    name: 'Minigame 5',
-    maxScore: 50,
-    description: 'Thử thách thứ năm'
+    name: 'Rổ vàng ẩn số',
+    maxScore: 100,
+    description: 'Tìm kiếm kho báu ẩn'
   },
   {
     id: 'minigame6',
-    name: 'Minigame 6',
-    maxScore: 50,
-    description: 'Thử thách thứ sáu'
+    name: 'Vùng an toàn',
+    maxScore: 30,
+    description: 'Bảo vệ tài sản'
   }
 ];
 
