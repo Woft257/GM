@@ -13,8 +13,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string>('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualInput, setManualInput] = useState('');
+
 
   useEffect(() => {
     if (isOpen && !scannerRef.current && hasPermission === null) {
@@ -44,7 +43,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
   // Separate effect for when permission is granted
   useEffect(() => {
-    if (hasPermission === true && isOpen && !scannerRef.current && !showManualInput) {
+    if (hasPermission === true && isOpen && !scannerRef.current) {
       // Ensure DOM is ready
       const timer = setTimeout(() => {
         initializeScanner();
@@ -52,7 +51,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
       return () => clearTimeout(timer);
     }
-  }, [hasPermission, isOpen, showManualInput]);
+  }, [hasPermission, isOpen]);
 
   const checkCameraPermission = async () => {
     try {
@@ -168,25 +167,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     setIsScanning(false);
     setError('');
     setHasPermission(null);
-    setShowManualInput(false);
-    setManualInput('');
     onClose();
   };
 
-  const handleManualSubmit = () => {
-    const input = manualInput.trim();
-    if (input) {
-      // Check if it's a 6-digit code
-      if (/^\d{6}$/.test(input)) {
-        // Handle as simple code
-        onScanSuccess(`SIMPLE_CODE:${input}`);
-      } else {
-        // Handle as QR data
-        onScanSuccess(input);
-      }
-      handleClose();
-    }
-  };
+
 
   const requestCameraPermission = async () => {
     try {
@@ -359,12 +343,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                   🎥 Cho phép truy cập camera
                 </button>
 
-                <button
-                  onClick={() => setShowManualInput(true)}
-                  className="w-full bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 border border-gray-700 active:scale-95 touch-manipulation"
-                >
-                  ⌨️ Nhập 6 số thủ công
-                </button>
+
 
                 <div className="bg-gray-900 border border-gray-800 rounded-lg p-3 text-left">
                   <p className="text-blue-400 font-semibold mb-2 text-sm">💡 Hướng dẫn khắc phục:</p>
@@ -378,48 +357,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
             </div>
           )}
 
-          {showManualInput && (
-            <div className="text-center py-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <span className="text-white text-lg">⌨️</span>
-              </div>
-              <h4 className="text-lg font-bold text-white mb-4">Nhập mã thủ công</h4>
-              <div className="space-y-3">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={manualInput}
-                    onChange={(e) => setManualInput(e.target.value)}
-                    placeholder="Nhập 6 số..."
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-xl font-mono tracking-widest"
-                    maxLength={6}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    autoComplete="off"
-                    autoFocus
-                  />
-                  <div className="absolute top-2 right-3">
-                    <span className="text-xs text-gray-400">6 số</span>
-                  </div>
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={handleManualSubmit}
-                    disabled={!manualInput.trim()}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                  >
-                    ✅ Xác nhận
-                  </button>
-                  <button
-                    onClick={() => setShowManualInput(false)}
-                    className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg font-semibold transition-all duration-200 border border-gray-700"
-                  >
-                    ↩️ Quay lại
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {hasPermission === true && (
             <div className="space-y-4">
@@ -491,14 +429,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
               )}
 
               {/* Manual input option - Mobile optimized */}
-              <div className="text-center">
-                <button
-                  onClick={() => setShowManualInput(true)}
-                  className="text-gray-400 hover:text-white text-sm underline transition-colors touch-manipulation py-2"
-                >
-                  Không quét được? Nhập 6 số →
-                </button>
-              </div>
+
             </div>
           )}
         </div>

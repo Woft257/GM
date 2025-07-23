@@ -12,7 +12,7 @@ import { parseQRData, validateQRData } from '../lib/qrcode';
 import { useQRToken, useQRTokenBySimpleCode, createPendingScore } from '../lib/database';
 import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { usePendingScores } from '../hooks/usePendingScores';
-import { getBoothName } from '../data/booths';
+import { getBoothName, physicalBooths, getMinigamesForBooth } from '../data/booths';
 import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye } from 'lucide-react';
 import { isQRScanningAllowed } from '../lib/gameControl';
 import { useGameStatus } from '../hooks/useGameStatus';
@@ -130,16 +130,40 @@ const HomePage: React.FC = () => {
       const boothQRData = parseBoothQRData(qrText);
 
       if (boothQRData && validateBoothQRData(boothQRData)) {
-        // Create pending score entry
-        await createPendingScore(boothQRData.boothId, username);
+        // Check if user has already completed all minigames for this booth
+        const boothMinigames = getMinigamesForBooth(boothQRData.boothId);
+        const userScores = user?.scores || {};
 
-        // Show success message and stay on home page
-        setScanResult({
-          success: true,
-          message: `Đã quét thành công booth ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
-          isPending: true,
-          boothId: boothQRData.boothId
-        });
+        const completedMinigames = boothMinigames.filter(minigame =>
+          userScores[minigame.id] !== undefined && userScores[minigame.id] > 0
+        );
+
+        if (completedMinigames.length === boothMinigames.length) {
+          setScanResult({
+            success: false,
+            message: `Bạn đã hoàn thành tất cả minigame của ${boothQRData.boothId}. Không thể quét lại!`
+          });
+          return;
+        }
+
+        // Check if user already has pending score for this booth
+        try {
+          // Create pending score entry
+          await createPendingScore(boothQRData.boothId, username);
+
+          // Show success message and stay on home page
+          setScanResult({
+            success: true,
+            message: `Đã quét thành công ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
+            isPending: true,
+            boothId: boothQRData.boothId
+          });
+        } catch (error: any) {
+          setScanResult({
+            success: false,
+            message: error.message || 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm'
+          });
+        }
         return;
       }
 

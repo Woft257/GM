@@ -59,7 +59,7 @@ const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers 
       </div>
 
       <div className="space-y-3">
-        <h4 className="text-lg font-semibold text-white mb-4">Danh sách Booth</h4>
+        <h4 className="text-lg font-semibold text-white mb-4">Danh sách các Minigame</h4>
         {booths.map((booth) => {
           const isCompleted = user.playedBooths[booth.id] || (user.scores && user.scores[booth.id] > 0);
           const isPending = pendingBooths.includes(booth.id);
@@ -105,9 +105,15 @@ const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers 
               </div>
               <div className="text-right">
                 {isCompleted ? (
-                  <p className="text-white font-semibold">{userScore}/{booth.maxScore} điểm</p>
+                  <p className="text-white font-semibold">
+                    {userScore}{booth.maxScore !== 999999 ? `/${booth.maxScore}` : ''} điểm
+                  </p>
                 ) : (
-                  <p className="text-gray-300 text-sm">Tối đa {booth.maxScore} điểm</p>
+                  booth.maxScore !== 999999 ? (
+                    <p className="text-gray-300 text-sm">Tối đa {booth.maxScore} điểm</p>
+                  ) : (
+                    <p className="text-gray-300 text-sm">Không giới hạn</p>
+                  )
                 )}
                 {statusText && (
                   <p className={`font-semibold text-sm ${statusColor}`}>{statusText}</p>
