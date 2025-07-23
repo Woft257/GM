@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Trophy, CheckCircle, AlertCircle } from 'lucide-react';
 import { usePendingScores } from '../hooks/usePendingScores';
 import { allocateScore } from '../lib/database';
-import { booths, minigames } from '../data/booths';
+import { physicalBooths, getMinigamesForBooth } from '../data/booths';
 
 const BoothAllocationPage: React.FC = () => {
   const { boothId } = useParams<{ boothId: string }>();
@@ -12,8 +12,8 @@ const BoothAllocationPage: React.FC = () => {
   const [allocatingUser, setAllocatingUser] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const booth = booths.find(b => b.id === boothId);
-  const boothMinigames = boothId ? minigames[boothId as keyof typeof minigames] : [];
+  const booth = physicalBooths.find(b => b.id === boothId);
+  const boothMinigames = boothId ? getMinigamesForBooth(boothId) : [];
   const boothPendingScores = pendingScores.filter(ps => ps.boothId === boothId);
 
   useEffect(() => {

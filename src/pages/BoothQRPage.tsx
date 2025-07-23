@@ -4,7 +4,7 @@ import { QrCode, Download, Copy, CheckCircle } from 'lucide-react';
 import Layout from '../components/Layout';
 import { generateBoothQR } from '../lib/boothQR';
 import { BoothQR } from '../types';
-import { booths } from '../data/booths';
+import { physicalBooths } from '../data/booths';
 
 const BoothQRPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const BoothQRPage: React.FC = () => {
     const qrs: Record<string, BoothQR> = {};
 
     try {
-      for (const booth of booths) {
+      for (const booth of physicalBooths) {
         const boothQR = await generateBoothQR(booth.id);
         qrs[booth.id] = boothQR;
       }
@@ -81,7 +81,7 @@ const BoothQRPage: React.FC = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {booths.map((booth) => {
+          {physicalBooths.map((booth) => {
             const boothQR = boothQRs[booth.id];
             if (!boothQR) return null;
 

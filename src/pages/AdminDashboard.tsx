@@ -14,7 +14,7 @@ import {
 import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
 import { useGameStatus } from '../hooks/useGameStatus';
-import { booths } from '../data/booths';
+import { physicalBooths } from '../data/booths';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ const AdminDashboard: React.FC = () => {
 
           <div className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 text-center">
             <Settings className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-purple-400 mx-auto mb-1 sm:mb-2" />
-            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{booths.length}</div>
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{physicalBooths.length}</div>
             <p className="text-white/60 text-xs sm:text-sm">Booth</p>
           </div>
         </div>
@@ -153,7 +153,7 @@ const AdminDashboard: React.FC = () => {
           <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-3 sm:mb-4">Phân bổ điểm Booth</h2>
 
           <div className="grid gap-2 sm:gap-3 lg:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {booths.map((booth) => (
+            {physicalBooths.map((booth) => (
               <button
                 key={booth.id}
                 onClick={() => navigate(`/admin/booth/${booth.id}/allocate`)}
@@ -165,7 +165,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-xs sm:text-sm lg:text-base truncate">{booth.name}</div>
-                    <div className="text-xs text-blue-300">Max: {booth.maxScore} điểm</div>
+                    <div className="text-xs text-blue-300">{booth.minigames.length} minigames</div>
                   </div>
                 </div>
                 <p className="text-gray-300 text-xs sm:text-sm line-clamp-2 leading-relaxed">
