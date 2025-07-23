@@ -18,11 +18,15 @@ const BoothAllocationPage: React.FC = () => {
   const boothMinigames = boothId ? getMinigamesForBooth(boothId) : [];
   const boothPendingScores = pendingScores.filter(ps => ps.boothId === boothId);
 
+  const navigateToAdmin = () => {
+    window.location.href = '/admin';
+  };
+
   useEffect(() => {
     if (!booth) {
-      navigate('/admin');
+      window.location.href = '/admin';
     }
-  }, [booth, navigate]);
+  }, [booth]);
 
   // Load user scores for pending users
   useEffect(() => {
@@ -128,7 +132,7 @@ const BoothAllocationPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center min-w-0 flex-1">
               <button
-                onClick={() => navigate('/admin')}
+                onClick={navigateToAdmin}
                 className="mr-3 sm:mr-4 p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800 flex-shrink-0"
                 title="Quay lại Dashboard"
               >
@@ -177,7 +181,14 @@ const BoothAllocationPage: React.FC = () => {
           <div className="text-center py-12">
             <Trophy className="h-16 w-16 text-gray-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">Không có người chơi nào chờ phân bổ</h3>
-            <p className="text-gray-400">Tất cả người chơi đã được phân bổ điểm hoặc chưa có ai quét QR code của booth này.</p>
+            <p className="text-gray-400 mb-6">Tất cả người chơi đã được phân bổ điểm hoặc chưa có ai quét QR code của booth này.</p>
+            <button
+              onClick={navigateToAdmin}
+              className="bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center mx-auto space-x-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span>Quay lại Dashboard</span>
+            </button>
           </div>
         ) : (
           <div className="space-y-4">

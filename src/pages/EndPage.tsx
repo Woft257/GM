@@ -48,6 +48,11 @@ const EndPage: React.FC = () => {
       await resetAllData();
       await setGameStatus('active');
       setShowResetConfirm(false);
+
+      // Clear all client-side cached data
+      localStorage.clear();
+      sessionStorage.clear();
+
       alert('Đã reset thành công! Trang sẽ tự động tải lại.');
 
       // Force reload to clear all client-side state

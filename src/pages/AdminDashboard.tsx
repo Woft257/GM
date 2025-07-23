@@ -183,7 +183,7 @@ const AdminDashboard: React.FC = () => {
             {physicalBooths.map((booth) => (
               <button
                 key={booth.id}
-                onClick={() => navigate(`/admin/booth/${booth.id}/allocate`)}
+                onClick={() => navigate(`/admin/${booth.id}`)}
                 className="bg-gradient-to-r from-blue-600/20 to-cyan-400/20 hover:from-blue-600/30 hover:to-cyan-400/30 border border-blue-500/30 hover:border-blue-400/50 text-white p-3 sm:p-4 rounded-lg sm:rounded-xl transition-all duration-200 text-left touch-manipulation active:scale-95"
               >
                 <div className="flex items-center space-x-2 sm:space-x-3 mb-2">

@@ -760,3 +760,37 @@ export const updateUserReward = async (username: string, rewardId: string, claim
     throw error;
   }
 };
+
+// Function to clear all pending scores (for reset)
+export const clearAllPendingScores = async (): Promise<void> => {
+  try {
+    console.log('Clearing all pending scores...');
+    const pendingScoresRef = collection(db, PENDING_SCORES_COLLECTION);
+    const snapshot = await getDocs(pendingScoresRef);
+
+    if (snapshot.empty) {
+      console.log('No pending scores to clear');
+      return;
+    }
+
+    const batchSize = 500;
+    const docs = snapshot.docs;
+
+    for (let i = 0; i < docs.length; i += batchSize) {
+      const batch = writeBatch(db);
+      const batchDocs = docs.slice(i, i + batchSize);
+
+      batchDocs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      console.log(`Deleted ${batchDocs.length} pending scores`);
+    }
+
+    console.log(`Cleared all ${docs.length} pending scores`);
+  } catch (error) {
+    console.error('Error clearing pending scores:', error);
+    throw error;
+  }
+};

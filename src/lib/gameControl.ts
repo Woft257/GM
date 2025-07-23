@@ -20,6 +20,9 @@ const USERS_COLLECTION = 'users';
 const QR_TOKENS_COLLECTION = 'qrTokens';
 const PENDING_SCORES_COLLECTION = 'pendingScores';
 
+// Import clear function
+import { clearAllPendingScores } from './database';
+
 export const getGameStatus = async (): Promise<GameStatus> => {
   try {
     const statusRef = doc(db, GAME_CONTROL_COLLECTION, GAME_STATUS_DOC);
@@ -61,6 +64,10 @@ export const resetAllData = async (): Promise<void> => {
   try {
     console.log('Starting game reset...');
 
+    // First, explicitly clear pending scores using the dedicated function
+    console.log('Clearing pending scores with dedicated function...');
+    await clearAllPendingScores();
+
     // Get all collections to delete
     const collections = [
       USERS_COLLECTION,
@@ -72,6 +79,20 @@ export const resetAllData = async (): Promise<void> => {
     for (const collectionName of collections) {
       console.log(`Deleting collection: ${collectionName}`);
       await deleteCollection(collectionName);
+
+      // Wait a bit to ensure deletion is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify deletion by checking if collection is empty
+      const verifyRef = collection(db, collectionName);
+      const verifySnapshot = await getDocs(verifyRef);
+      console.log(`Collection ${collectionName} has ${verifySnapshot.docs.length} documents remaining`);
+
+      // If still has documents, try one more time
+      if (verifySnapshot.docs.length > 0) {
+        console.log(`Retrying deletion for ${collectionName}...`);
+        await deleteCollection(collectionName);
+      }
     }
 
     // Reset game status to active
@@ -81,6 +102,7 @@ export const resetAllData = async (): Promise<void> => {
     localStorage.removeItem('telegram_username');
     localStorage.removeItem('admin_authenticated');
     localStorage.removeItem('admin_auth_timestamp');
+    localStorage.removeItem('username'); // Also clear this key
 
     // Broadcast reset event to all tabs/windows
     localStorage.setItem('game_reset_timestamp', Date.now().toString());
@@ -94,24 +116,46 @@ export const resetAllData = async (): Promise<void> => {
 
 // Helper function to delete all documents in a collection
 const deleteCollection = async (collectionName: string): Promise<void> => {
-  const collectionRef = collection(db, collectionName);
-  const snapshot = await getDocs(collectionRef);
-  
-  // Delete in batches of 500 (Firestore limit)
-  const batchSize = 500;
-  const docs = snapshot.docs;
-  
-  for (let i = 0; i < docs.length; i += batchSize) {
-    const batch = writeBatch(db);
-    const batchDocs = docs.slice(i, i + batchSize);
-    
-    batchDocs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    
-    await batch.commit();
-    console.log(`Deleted batch ${Math.floor(i / batchSize) + 1} from ${collectionName}`);
+  let hasMore = true;
+  let deletedCount = 0;
+
+  while (hasMore) {
+    const collectionRef = collection(db, collectionName);
+    const snapshot = await getDocs(collectionRef);
+
+    if (snapshot.empty) {
+      hasMore = false;
+      break;
+    }
+
+    // Delete in batches of 500 (Firestore limit)
+    const batchSize = 500;
+    const docs = snapshot.docs;
+
+    for (let i = 0; i < docs.length; i += batchSize) {
+      const batch = writeBatch(db);
+      const batchDocs = docs.slice(i, i + batchSize);
+
+      batchDocs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      deletedCount += batchDocs.length;
+      console.log(`Deleted batch ${Math.floor(i / batchSize) + 1} from ${collectionName} (${deletedCount} total)`);
+    }
+
+    // Check if there are more documents
+    const remainingSnapshot = await getDocs(collectionRef);
+    hasMore = !remainingSnapshot.empty;
+
+    if (hasMore) {
+      console.log(`Still ${remainingSnapshot.docs.length} documents remaining in ${collectionName}, continuing...`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before next iteration
+    }
   }
+
+  console.log(`Finished deleting collection ${collectionName}. Total deleted: ${deletedCount}`);
 };
 
 // Check if QR scanning is allowed
