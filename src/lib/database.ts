@@ -450,12 +450,6 @@ export const createPendingScore = async (boothId: string, username: string): Pro
     throw new Error('Bạn đã quét QR code của booth này và đang chờ phân bổ điểm');
   }
 
-  // Check if user already completed this booth
-  const user = await getUser(username);
-  if (user && user.playedBooths[boothId]) {
-    throw new Error('Bạn đã hoàn thành booth này rồi');
-  }
-
   const timestamp = Date.now();
   const pendingId = `${boothId}_${username}_${timestamp}`;
   const pendingRef = doc(db, PENDING_SCORES_COLLECTION, pendingId);

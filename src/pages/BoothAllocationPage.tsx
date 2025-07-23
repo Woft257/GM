@@ -11,6 +11,7 @@ const BoothAllocationPage: React.FC = () => {
   const { pendingScores, loading } = usePendingScores();
   const [allocatingUser, setAllocatingUser] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
 
   const booth = physicalBooths.find(b => b.id === boothId);
   const boothMinigames = boothId ? getMinigamesForBooth(boothId) : [];
@@ -22,14 +23,41 @@ const BoothAllocationPage: React.FC = () => {
     }
   }, [booth, navigate]);
 
-  const handleAllocateScore = async (username: string, minigameId: string, score: number) => {
+  const handleScoreChange = (username: string, minigameId: string, score: string) => {
+    const numScore = parseInt(score) || 0;
+    setScores(prev => ({
+      ...prev,
+      [username]: {
+        ...prev[username],
+        [minigameId]: numScore
+      }
+    }));
+  };
+
+  const handleAllocateScore = async (username: string, minigameId: string) => {
     if (allocatingUser) return;
+
+    const score = scores[username]?.[minigameId] || 0;
+    if (score < 0 || score > 50) {
+      setNotification({ type: 'error', message: 'Điểm phải từ 0 đến 50' });
+      setTimeout(() => setNotification(null), 3000);
+      return;
+    }
 
     try {
       setAllocatingUser(username);
       await allocateScore(username, boothId!, minigameId, score);
-      setNotification({ type: 'success', message: `Đã phân bổ ${score} điểm cho ${username}` });
+      setNotification({ type: 'success', message: `Đã phân bổ ${score} điểm ${minigameId} cho ${username}` });
       setTimeout(() => setNotification(null), 3000);
+
+      // Clear the score input
+      setScores(prev => ({
+        ...prev,
+        [username]: {
+          ...prev[username],
+          [minigameId]: 0
+        }
+      }));
     } catch (error: any) {
       setNotification({ type: 'error', message: error.message || 'Có lỗi xảy ra' });
       setTimeout(() => setNotification(null), 3000);
@@ -121,32 +149,32 @@ const BoothAllocationPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-gray-300 text-sm">Chọn minigame và phân bổ điểm:</p>
+                  <p className="text-gray-300 text-sm">Chọn minigame và nhập điểm (0-50):</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {boothMinigames.map((minigame) => (
                       <div key={minigame.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
                         <h4 className="font-semibold text-white mb-3 text-center">{minigame.name}</h4>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[0, 25, 50].map((score) => (
-                            <button
-                              key={`${minigame.id}-${score}`}
-                              onClick={() => handleAllocateScore(pendingScore.username, minigame.id, score)}
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="number"
+                              min="0"
+                              max="50"
+                              value={scores[pendingScore.username]?.[minigame.id] || ''}
+                              onChange={(e) => handleScoreChange(pendingScore.username, minigame.id, e.target.value)}
+                              placeholder="Nhập điểm"
+                              className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               disabled={allocatingUser === pendingScore.username}
-                              className={`py-2 px-3 rounded-lg font-semibold transition-all duration-200 text-sm ${
-                                score === 0
-                                  ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40'
-                                  : score === 25
-                                  ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 border border-yellow-500/40'
-                                  : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/40'
-                              } ${
-                                allocatingUser === pendingScore.username
-                                  ? 'opacity-50 cursor-not-allowed'
-                                  : 'hover:scale-105'
-                              }`}
-                            >
-                              {allocatingUser === pendingScore.username ? '...' : `${score} điểm`}
-                            </button>
-                          ))}
+                            />
+                            <span className="text-gray-400 text-sm">điểm</span>
+                          </div>
+                          <button
+                            onClick={() => handleAllocateScore(pendingScore.username, minigame.id)}
+                            disabled={allocatingUser === pendingScore.username || !scores[pendingScore.username]?.[minigame.id]}
+                            className="w-full bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 disabled:from-gray-600 disabled:to-gray-700 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 disabled:cursor-not-allowed"
+                          >
+                            {allocatingUser === pendingScore.username ? 'Đang phân bổ...' : 'Phân bổ điểm'}
+                          </button>
                         </div>
                       </div>
                     ))}

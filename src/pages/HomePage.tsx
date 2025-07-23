@@ -145,16 +145,24 @@ const HomePage: React.FC = () => {
           return;
         }
 
-        // Create pending score entry
-        await createPendingScore(boothQRData.boothId, username);
+        // Check if user already has pending score for this booth
+        try {
+          // Create pending score entry
+          await createPendingScore(boothQRData.boothId, username);
 
-        // Show success message and stay on home page
-        setScanResult({
-          success: true,
-          message: `Đã quét thành công ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
-          isPending: true,
-          boothId: boothQRData.boothId
-        });
+          // Show success message and stay on home page
+          setScanResult({
+            success: true,
+            message: `Đã quét thành công ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
+            isPending: true,
+            boothId: boothQRData.boothId
+          });
+        } catch (error: any) {
+          setScanResult({
+            success: false,
+            message: error.message || 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm'
+          });
+        }
         return;
       }
 
