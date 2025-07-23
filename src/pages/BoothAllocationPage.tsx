@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Trophy, CheckCircle, AlertCircle } from 'lucide-react';
 import { usePendingScores } from '../hooks/usePendingScores';
-import { allocateScore } from '../lib/database';
+import { allocateScore, getUser } from '../lib/database';
 import { physicalBooths, getMinigamesForBooth } from '../data/booths';
 
 const BoothAllocationPage: React.FC = () => {
@@ -12,6 +12,7 @@ const BoothAllocationPage: React.FC = () => {
   const [allocatingUser, setAllocatingUser] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
+  const [userScores, setUserScores] = useState<Record<string, Record<string, number>>>({});
 
   const booth = physicalBooths.find(b => b.id === boothId);
   const boothMinigames = boothId ? getMinigamesForBooth(boothId) : [];
@@ -22,6 +23,30 @@ const BoothAllocationPage: React.FC = () => {
       navigate('/admin');
     }
   }, [booth, navigate]);
+
+  // Load user scores for pending users
+  useEffect(() => {
+    const loadUserScores = async () => {
+      const scores: Record<string, Record<string, number>> = {};
+      for (const pendingScore of boothPendingScores) {
+        if (!pendingScore.username) continue;
+
+        try {
+          const user = await getUser(pendingScore.username);
+          if (user && user.scores) {
+            scores[pendingScore.username] = user.scores;
+          }
+        } catch (error) {
+          console.error('Error loading user scores:', error);
+        }
+      }
+      setUserScores(scores);
+    };
+
+    if (boothPendingScores.length > 0) {
+      loadUserScores();
+    }
+  }, [boothPendingScores]);
 
   const handleScoreChange = (username: string, minigameId: string, score: string) => {
     const numScore = parseInt(score) || 0;
@@ -133,8 +158,8 @@ const BoothAllocationPage: React.FC = () => {
               Người chơi chờ phân bổ điểm ({boothPendingScores.length})
             </h2>
             
-            {boothPendingScores.map((pendingScore) => (
-              <div key={`${pendingScore.username}-${pendingScore.timestamp}`} 
+            {boothPendingScores.map((pendingScore, index) => (
+              <div key={pendingScore.id || `pending-${index}`}
                    className="bg-gray-900/80 border border-gray-700 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -149,36 +174,72 @@ const BoothAllocationPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-gray-300 text-sm">Chọn minigame và nhập điểm (0-50):</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {boothMinigames.map((minigame) => (
-                      <div key={minigame.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                        <h4 className="font-semibold text-white mb-3 text-center">{minigame.name}</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="number"
-                              min="0"
-                              max="50"
-                              value={scores[pendingScore.username]?.[minigame.id] || ''}
-                              onChange={(e) => handleScoreChange(pendingScore.username, minigame.id, e.target.value)}
-                              placeholder="Nhập điểm"
-                              className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              disabled={allocatingUser === pendingScore.username}
-                            />
-                            <span className="text-gray-400 text-sm">điểm</span>
+                  {(() => {
+                    const currentUserScores = userScores[pendingScore.username] || {};
+                    const availableMinigames = boothMinigames.filter(minigame =>
+                      !currentUserScores[minigame.id] || currentUserScores[minigame.id] === 0
+                    );
+                    const completedMinigames = boothMinigames.filter(minigame =>
+                      currentUserScores[minigame.id] && currentUserScores[minigame.id] > 0
+                    );
+
+                    return (
+                      <>
+                        {completedMinigames.length > 0 && (
+                          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                            <p className="text-green-300 text-sm font-semibold mb-2">Đã hoàn thành:</p>
+                            <div className="space-y-1">
+                              {completedMinigames.map((minigame, idx) => (
+                                <div key={minigame?.id || `completed-${idx}`} className="flex justify-between text-sm">
+                                  <span className="text-gray-300">{minigame?.name}</span>
+                                  <span className="text-green-400 font-semibold">{currentUserScores[minigame?.id || ''] || 0} điểm</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <button
-                            onClick={() => handleAllocateScore(pendingScore.username, minigame.id)}
-                            disabled={allocatingUser === pendingScore.username || !scores[pendingScore.username]?.[minigame.id]}
-                            className="w-full bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 disabled:from-gray-600 disabled:to-gray-700 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 disabled:cursor-not-allowed"
-                          >
-                            {allocatingUser === pendingScore.username ? 'Đang phân bổ...' : 'Phân bổ điểm'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        )}
+
+                        {availableMinigames.length > 0 ? (
+                          <>
+                            <p className="text-gray-300 text-sm">Chọn minigame và nhập điểm (0-50):</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {availableMinigames.map((minigame, idx) => (
+                                <div key={minigame?.id || `available-${idx}`} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                                  <h4 className="font-semibold text-white mb-3 text-center">{minigame?.name}</h4>
+                                  <div className="space-y-3">
+                                    <div className="flex items-center space-x-2">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="50"
+                                        value={scores[pendingScore.username]?.[minigame?.id || ''] || ''}
+                                        onChange={(e) => handleScoreChange(pendingScore.username, minigame?.id || '', e.target.value)}
+                                        placeholder="Nhập điểm"
+                                        className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        disabled={allocatingUser === pendingScore.username}
+                                      />
+                                      <span className="text-gray-400 text-sm">điểm</span>
+                                    </div>
+                                    <button
+                                      onClick={() => handleAllocateScore(pendingScore.username, minigame?.id || '')}
+                                      disabled={allocatingUser === pendingScore.username || !scores[pendingScore.username]?.[minigame?.id || '']}
+                                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 disabled:from-gray-600 disabled:to-gray-700 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 disabled:cursor-not-allowed"
+                                    >
+                                      {allocatingUser === pendingScore.username ? 'Đang phân bổ...' : 'Phân bổ điểm'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">
+                            <p className="text-yellow-300">Người chơi đã hoàn thành tất cả minigame của booth này!</p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             ))}
