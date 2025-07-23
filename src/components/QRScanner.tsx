@@ -286,29 +286,29 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
       <div className="fixed inset-0 bg-black z-50 flex flex-col" style={{ touchAction: 'none' }}>
         <div className="flex-1 bg-black overflow-hidden">
-        {/* MEXC-style Header */}
-        <div className="bg-black border-b border-gray-800">
-          <div className="flex items-center justify-between px-3 py-2 safe-area-top">
+        {/* MEXC-style Header - Mobile Optimized */}
+        <div className="bg-black border-b border-gray-800 sticky top-0 z-10">
+          <div className="flex items-center justify-between px-2 py-2 safe-area-top">
             <div className="flex items-center space-x-2">
               {/* MEXC x GM Vietnam Collaboration Logo */}
-              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6" />
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-5 sm:h-6" />
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <Camera className="h-4 w-4 text-white" />
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
               </div>
               <button
                 onClick={handleClose}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-all duration-200 active:scale-95 touch-manipulation"
+                className="p-2 hover:bg-gray-800 rounded-lg transition-all duration-200 active:scale-95 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
-                <X className="h-5 w-5 text-white" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 p-3 sm:p-4 overflow-y-auto bg-black">
+        {/* Content - Mobile Optimized */}
+        <div className="flex-1 p-2 sm:p-4 overflow-y-auto bg-black">
           {hasPermission === null && (
             <div className="text-center py-8">
               <div className="relative">
@@ -379,9 +379,9 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
                   id="qr-scanner-container"
                   className="w-full h-full rounded-lg overflow-hidden border border-gray-700 shadow-2xl bg-black"
                   style={{
-                    minHeight: '300px',
-                    height: '400px',
-                    maxHeight: '60vh'
+                    minHeight: '250px',
+                    height: '350px',
+                    maxHeight: '55vh'
                   }}
                 />
 

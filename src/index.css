@@ -28,6 +28,35 @@
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Prevent overscroll bounce on iOS */
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Improve mobile performance */
+  * {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Better mobile viewport handling */
+  @media screen and (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
+
+    /* Ensure minimum touch target size */
+    button, a, input, select, textarea {
+      min-height: 48px;
+    }
+
+    /* Prevent horizontal scroll */
+    body {
+      overflow-x: hidden;
+    }
+  }
 }
 
 /* MEXC-style custom scrollbar */
@@ -54,73 +83,7 @@
   background: linear-gradient(to bottom, #0891b2, #0e7490);
 }
 
-/* MEXC Background Class */
-.mexc-background {
-  background: #000000;
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-}
 
-/* Main Circle Ring */
-.mexc-background::before {
-  content: '';
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 500px;
-  height: 500px;
-  border: 4px solid #3b82f6;
-  border-radius: 50%;
-  box-shadow:
-    0 0 40px #3b82f6,
-    inset 0 0 40px rgba(59, 130, 246, 0.3),
-    0 0 80px rgba(59, 130, 246, 0.8);
-  z-index: -1;
-  pointer-events: none;
-  animation: mexc-rotate 15s linear infinite;
-}
-
-/* Blue Glow Effect */
-.mexc-background::after {
-  content: '';
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 480px;
-  height: 480px;
-  background: radial-gradient(
-    circle at center,
-    transparent 80%,
-    rgba(59, 130, 246, 0.4) 85%,
-    rgba(59, 130, 246, 0.8) 90%,
-    rgba(59, 130, 246, 0.4) 95%,
-    transparent 100%
-  );
-  border-radius: 50%;
-  z-index: -1;
-  pointer-events: none;
-  animation: mexc-pulse 6s ease-in-out infinite;
-}
-
-/* MEXC Background Animations */
-@keyframes mexc-rotate {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-@keyframes mexc-pulse {
-  0%, 100% {
-    opacity: 0.8;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.05);
-  }
-}
 
 @layer utilities {
   .touch-manipulation {
@@ -133,6 +96,31 @@
 
   .active\:scale-98:active {
     transform: scale(0.98);
+  }
+
+  /* MEXC Animation Classes */
+  .animate-spin-slow {
+    animation: spin 15s linear infinite;
+  }
+
+  .animate-spin-reverse {
+    animation: spin 20s linear infinite reverse;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 6s ease-in-out infinite;
+  }
+}
+
+/* MEXC Keyframes */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
   }
 }
 

@@ -11,9 +11,9 @@ interface LeaderboardProps {
 const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }) => {
   const getRankIcon = (rank: number) => {
     switch (rank) {
-      case 1: return <Crown className="h-5 w-5 text-yellow-500" />;
-      case 2: return <Medal className="h-5 w-5 text-gray-400" />;
-      case 3: return <Award className="h-5 w-5 text-amber-600" />;
+      case 1: return <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />;
+      case 2: return <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />;
+      case 3: return <Award className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />;
       default: return null;
     }
   };
@@ -46,46 +46,46 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
           return (
             <div
               key={user.telegram}
-              className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:bg-gray-700/30 ${
+              className={`flex items-center justify-between p-2 sm:p-4 rounded-lg sm:rounded-xl border transition-all duration-200 hover:bg-gray-700/30 ${
                 index === 0 ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-500/40' :
                 index === 1 ? 'bg-gradient-to-r from-gray-400/20 to-slate-400/20 border-gray-400/40' :
                 index === 2 ? 'bg-gradient-to-r from-amber-600/20 to-orange-500/20 border-amber-600/40' :
                 'bg-gray-800/30 border-gray-700/50'
               } ${
-                isCurrentUser ? 'ring-2 ring-cyan-400' : ''
+                isCurrentUser ? 'ring-1 sm:ring-2 ring-cyan-400' : ''
               }`}
             >
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-10 h-10">
+              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+                <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
                   {index < 3 ? (
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400">
+                    <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400">
                       {getRankIcon(index + 1)}
                     </div>
                   ) : (
-                    <div className="w-8 h-8 bg-gray-700/50 rounded-full flex items-center justify-center">
-                      <span className="text-gray-300 font-bold text-sm">#{index + 1}</span>
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-700/50 rounded-full flex items-center justify-center">
+                      <span className="text-gray-300 font-bold text-xs sm:text-sm">#{index + 1}</span>
                     </div>
                   )}
                 </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <p className="font-semibold text-white">{user.telegram}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+                    <p className="font-semibold text-white text-sm sm:text-base truncate">{user.telegram}</p>
                     {isCurrentUser && (
-                      <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-semibold flex-shrink-0">
                         Bạn
                       </span>
                     )}
                   </div>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-gray-400 text-xs sm:text-sm">
                     {Object.keys(user.playedBooths || {}).length} booth đã chơi
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              <div className="text-right flex-shrink-0">
+                <div className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   {user.totalScore}
                 </div>
-                <p className="text-gray-400 text-sm">điểm</p>
+                <p className="text-gray-400 text-xs sm:text-sm">điểm</p>
               </div>
             </div>
           );

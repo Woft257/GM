@@ -3,6 +3,7 @@ export interface User {
   totalScore: number;
   playedBooths: Record<string, boolean>;
   scores?: Record<string, number>; // New field for booth scores
+  rewards?: Record<string, boolean>; // Track claimed rewards
   createdAt: Date;
 }
 

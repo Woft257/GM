@@ -13,7 +13,7 @@ import { useQRToken, useQRTokenBySimpleCode, createPendingScore } from '../lib/d
 import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { usePendingScores } from '../hooks/usePendingScores';
 import { getBoothName, physicalBooths, getMinigamesForBooth } from '../data/booths';
-import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye } from 'lucide-react';
+import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye, Gift } from 'lucide-react';
 import { isQRScanningAllowed } from '../lib/gameControl';
 import { useGameStatus } from '../hooks/useGameStatus';
 
@@ -309,30 +309,29 @@ const HomePage: React.FC = () => {
 
   return (
     <MexcBackground>
-      {/* MEXC-style Header */}
-      <div className="bg-black border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-3 py-2">
+      {/* MEXC-style Header - Mobile Optimized */}
+      <div className="bg-black border-b border-gray-800 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-2 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               {/* MEXC x GM Vietnam Collaboration Logo */}
-              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-5 sm:h-8" />
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
+            <div className="flex items-center space-x-1 sm:space-x-4">
+              <div className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-medium ${
                 gameEnded
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                   : 'bg-green-500/20 text-green-400 border border-green-500/30'
               }`}>
                 <span className="hidden sm:inline">{gameEnded ? '🔴 Đã kết thúc' : '🟢 Đang diễn ra'}</span>
-                <span className="sm:hidden">{gameEnded ? '🔴' : '🟢'}</span>
+                <span className="sm:hidden text-xs">{gameEnded ? '🔴' : '🟢'}</span>
               </div>
-
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="max-w-6xl mx-auto px-2 sm:px-4 py-3 sm:py-6 space-y-3 sm:space-y-6">
         {/* Hero Section - QR Scan or Game End */}
         <div className="relative">
           <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 sm:p-6 text-center">
@@ -340,10 +339,10 @@ const HomePage: React.FC = () => {
           <>
             <button
               onClick={() => setShowQRScanner(true)}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-base sm:text-lg"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/25 touch-manipulation text-sm sm:text-lg w-full max-w-xs sm:max-w-none sm:w-auto min-h-[48px]"
             >
-              <QrCode className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-              Quét QR Code
+              <QrCode className="h-4 w-4 sm:h-6 sm:w-6 mr-2 flex-shrink-0" />
+              <span>Quét QR Code</span>
             </button>
             <p className="text-white/60 text-xs sm:text-sm mt-2 sm:mt-3">
               Quét QR code tại các booth để nhận điểm
@@ -418,6 +417,136 @@ const HomePage: React.FC = () => {
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3 sm:p-6">
           <Leaderboard users={users} currentUser={user} loading={usersLoading} />
         </div>
+
+        {/* Rewards Section */}
+        {user && !gameEnded && (
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-6 backdrop-blur-sm">
+            <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-3 sm:mb-6">
+              <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                <Gift className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <h3 className="text-base sm:text-xl font-bold text-white">Phần thưởng</h3>
+            </div>
+
+            <div className="grid gap-3 sm:gap-4">
+              {/* Reward milestones */}
+              {(() => {
+                const completedMinigames = user?.scores ? Object.keys(user.scores).filter(key => (user.scores?.[key] || 0) > 0).length : 0;
+                const hasAnyReward = user.rewards && Object.values(user.rewards).some(claimed => claimed);
+
+                const rewards = [
+                  { name: 'Phần thưởng Đồng', icon: '🥉', color: 'from-amber-600 to-yellow-500', shadow: 'shadow-amber-500/20', minGames: 1, maxGames: 2 },
+                  { name: 'Phần thưởng Bạc', icon: '🥈', color: 'from-gray-400 to-gray-300', shadow: 'shadow-gray-400/20', minGames: 3, maxGames: 4 },
+                  { name: 'Phần thưởng Vàng', icon: '🥇', color: 'from-yellow-400 to-amber-300', shadow: 'shadow-yellow-400/20', minGames: 5, maxGames: 6 }
+                ];
+
+                return rewards.map((reward, index) => {
+                  const rewardKey = `reward${index + 1}`;
+                  const isClaimed = user.rewards && user.rewards[rewardKey];
+                  const isEligible = completedMinigames >= reward.minGames;
+
+                  return (
+                    <div key={index} className={`relative overflow-hidden rounded-lg sm:rounded-xl border transition-all duration-300 ${
+                      isClaimed
+                        ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/40 shadow-lg shadow-green-500/10'
+                        : isEligible && !hasAnyReward
+                          ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-400/40 shadow-lg shadow-yellow-500/10'
+                          : 'bg-gradient-to-r from-gray-800/40 to-gray-700/20 border-gray-600/20 opacity-60'
+                    }`}>
+                      <div className="p-3 sm:p-5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2 sm:space-x-4">
+                            <div className={`w-8 h-8 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r ${
+                              isClaimed || (isEligible && !hasAnyReward) ? reward.color : 'from-gray-600 to-gray-500'
+                            } flex items-center justify-center ${
+                              isClaimed || (isEligible && !hasAnyReward) ? reward.shadow : 'shadow-gray-500/10'
+                            } shadow-lg flex-shrink-0`}>
+                              <span className={`text-sm sm:text-2xl ${
+                                isClaimed || (isEligible && !hasAnyReward) ? '' : 'grayscale opacity-60'
+                              }`}>{reward.icon}</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className={`text-xs sm:text-base font-semibold ${
+                                isClaimed || (isEligible && !hasAnyReward) ? 'text-white' : 'text-gray-500'
+                              } truncate`}>{reward.name}</h4>
+                              <p className="text-gray-400 text-xs">
+                                {reward.minGames === reward.maxGames
+                                  ? `${reward.minGames} minigame`
+                                  : `${reward.minGames}+ minigames`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            {isClaimed ? (
+                              <div className="flex items-center space-x-1 sm:space-x-2">
+                                <div className="w-5 h-5 sm:w-7 sm:h-7 bg-green-500 rounded-full flex items-center justify-center">
+                                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                </div>
+                                <span className="text-green-400 text-xs sm:text-sm font-medium hidden sm:inline">Đã nhận</span>
+                              </div>
+                            ) : isEligible && !hasAnyReward ? (
+                              <div className="flex items-center space-x-1 sm:space-x-2">
+                                <div className="w-5 h-5 sm:w-7 sm:h-7 bg-yellow-500 rounded-full flex items-center justify-center animate-pulse">
+                                  <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                                </div>
+                                <span className="text-yellow-400 text-xs sm:text-sm font-medium hidden sm:inline">Đủ điều kiện</span>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 sm:w-7 sm:h-7 bg-gray-600 rounded-full flex items-center justify-center">
+                                <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Decorative gradient overlay */}
+                      {isClaimed && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-400/5 to-transparent pointer-events-none"></div>
+                      )}
+                      {isEligible && !isClaimed && !hasAnyReward && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/5 to-transparent pointer-events-none"></div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Notice about reward limitation */}
+            {(() => {
+              const completedMinigames = user?.scores ? Object.keys(user.scores).filter(key => (user.scores?.[key] || 0) > 0).length : 0;
+              const hasAnyReward = user.rewards && Object.values(user.rewards).some(claimed => claimed);
+              const eligibleRewards = [
+                { minGames: 1 },
+                { minGames: 3 },
+                { minGames: 5 }
+              ].filter(reward => completedMinigames >= reward.minGames);
+
+              if (eligibleRewards.length > 1 && !hasAnyReward) {
+                return (
+                  <div className="mt-4 p-3 sm:p-4 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-xs sm:text-sm">!</span>
+                      </div>
+                      <div>
+                        <p className="text-blue-300 text-xs sm:text-sm font-medium mb-1">
+                          Lưu ý quan trọng
+                        </p>
+                        <p className="text-blue-200 text-xs sm:text-sm leading-relaxed">
+                          Bạn đủ điều kiện nhận {eligibleRewards.length} phần thưởng, nhưng chỉ được chọn đổi <span className="font-semibold">1 phần thưởng duy nhất</span>.
+                          Hãy cân nhắc kỹ trước khi đổi tại booth admin.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        )}
 
         {/* User Progress - Desktop */}
         <div className="hidden sm:block">

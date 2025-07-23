@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Users, Star, AlertCircle, CheckCircle, Clock, Trophy } from 'lucide-react';
-import Layout from '../components/Layout';
+
 import { subscribeToPendingScoresByBooth, completePendingScore } from '../lib/database';
 import { isScoreAllocationAllowed } from '../lib/gameControl';
 import { PendingScore } from '../types';
@@ -72,39 +72,73 @@ const AdminBoothPage: React.FC = () => {
 
   if (!booth) {
     return (
-      <Layout title="Booth không tồn tại">
-        <div className="max-w-md mx-auto">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 text-center">
-            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-4">Booth không tồn tại</h3>
-            <p className="text-white/70 mb-6">
-              Booth ID "{boothId}" không hợp lệ.
-            </p>
-            <p className="text-red-400 font-semibold">
-              Vui lòng kiểm tra lại URL booth
-            </p>
+      <div className="min-h-screen bg-black">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="max-w-md mx-auto px-4">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8 text-center">
+              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-white mb-4">Booth không tồn tại</h3>
+              <p className="text-white/70 mb-6">
+                Booth ID "{boothId}" không hợp lệ.
+              </p>
+              <p className="text-red-400 font-semibold">
+                Vui lòng kiểm tra lại URL booth
+              </p>
+            </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <Layout title={`Admin - ${booth?.name || 'Loading...'}`}>
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mx-auto mb-6"></div>
-          <p className="text-white/70">Đang tải danh sách user...</p>
+      <div className="min-h-screen bg-black">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white/70">Đang tải danh sách user...</p>
+          </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout title={`Admin - ${booth.name}`}>
-      <div className="space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-black">
+      {/* MEXC-style Header */}
+      <div className="bg-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-white/70 hover:text-white text-sm"
+              >
+                ← Về Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">Admin - {booth.name}</h1>
+          <p className="text-white/70 text-sm sm:text-base">
+            {booth.description}
+          </p>
+        </div>
+
         {/* Booth Info - Mobile Optimized */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 sm:p-6">
           <div className="flex items-center mb-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-3 sm:mr-4">
               <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
@@ -116,15 +150,15 @@ const AdminBoothPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
-            <div className="bg-white/5 rounded-lg p-2 sm:p-3 text-center">
+            <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 text-center">
               <p className="text-white/60 text-xs sm:text-sm">Điểm tối đa</p>
               <p className="text-white font-semibold text-base sm:text-lg">{booth.maxScore}</p>
             </div>
-            <div className="bg-white/5 rounded-lg p-2 sm:p-3 text-center">
+            <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 text-center">
               <p className="text-white/60 text-xs sm:text-sm">Đang chờ</p>
               <p className="text-yellow-400 font-semibold text-base sm:text-lg">{pendingScores.length}</p>
             </div>
-            <div className="bg-white/5 rounded-lg p-2 sm:p-3 text-center">
+            <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 text-center">
               <p className="text-white/60 text-xs sm:text-sm">Trạng thái</p>
               <p className="text-green-400 font-semibold text-xs sm:text-sm">Hoạt động</p>
             </div>
@@ -134,7 +168,7 @@ const AdminBoothPage: React.FC = () => {
 
 
         {/* Pending Users List - Mobile Optimized */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 sm:p-6">
           <h4 className="text-base sm:text-lg font-semibold text-white mb-4 sm:mb-6 flex items-center">
             <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
             User đang chờ phân bổ điểm ({pendingScores.length})
@@ -163,18 +197,8 @@ const AdminBoothPage: React.FC = () => {
           )}
         </div>
 
-        {/* Back to Dashboard */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => navigate('/admin')}
-            className="text-white/70 hover:text-white transition-colors text-sm sm:text-base"
-          >
-            ← Về Admin Dashboard
-          </button>
-        </div>
-
       </div>
-    </Layout>
+    </div>
   );
 };
 
@@ -208,7 +232,7 @@ const PendingUserCard: React.FC<PendingUserCardProps> = ({ pending, booth, onCom
     <div className={`border rounded-lg sm:rounded-xl p-3 sm:p-4 transition-all duration-300 ${
       isCompleted
         ? 'bg-green-500/20 border-green-500/30'
-        : 'bg-white/5 border-white/10'
+        : 'bg-gray-800/50 border-gray-700'
     }`}>
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center">
@@ -257,7 +281,7 @@ const PendingUserCard: React.FC<PendingUserCardProps> = ({ pending, booth, onCom
                 max={booth.maxScore}
                 value={points}
                 onChange={(e) => setPoints(parseInt(e.target.value) || 1)}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 sm:py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
                 disabled={processing}
               />
             </div>
@@ -272,7 +296,7 @@ const PendingUserCard: React.FC<PendingUserCardProps> = ({ pending, booth, onCom
                   className={`px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                     points === quickPoints
                       ? 'bg-purple-500 text-white'
-                      : 'bg-white/10 text-white/80 hover:bg-white/20'
+                      : 'bg-gray-800 text-white/80 hover:bg-gray-700'
                   } disabled:opacity-50 touch-manipulation`}
                 >
                   {quickPoints}

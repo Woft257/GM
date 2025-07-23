@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, Users, RotateCcw, AlertTriangle, Crown, Medal, Award } from 'lucide-react';
-import Layout from '../components/Layout';
+
 import { useUsers } from '../hooks/useUsers';
 import { useGameStatus } from '../hooks/useGameStatus';
 import {
@@ -85,31 +85,52 @@ const EndPage: React.FC = () => {
 
   if (loading || usersLoading) {
     return (
-      <Layout title="Quản lý kết thúc sự kiện">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mx-auto mb-6"></div>
-          <p className="text-white/70">Đang tải...</p>
+      <div className="min-h-screen bg-black">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white/70">Đang tải...</p>
+          </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout title="Quản lý kết thúc sự kiện">
-      <div className="space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-black">
+      {/* MEXC-style Header */}
+      <div className="bg-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-white/70 hover:text-white text-sm"
+              >
+                ← Về Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header - Mobile Optimized */}
         <div className="text-center">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
             <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Quản lý sự kiện</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">Quản lý sự kiện</h1>
           <p className="text-white/70 text-sm sm:text-base">
             Kết thúc sự kiện và công bố người thắng
           </p>
         </div>
 
         {/* Game Status - Mobile Optimized */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
             <h2 className="text-lg sm:text-xl font-bold text-white">Trạng thái game</h2>
             <div className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold text-center ${
@@ -185,7 +206,7 @@ const EndPage: React.FC = () => {
         )}
 
         {/* Full Leaderboard */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-white">Bảng xếp hạng Top 10</h2>
             <div className="flex items-center text-white/60">
@@ -227,7 +248,7 @@ const EndPage: React.FC = () => {
         {/* Reset Confirmation Modal */}
         {showResetConfirm && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 max-w-md w-full">
+            <div className="bg-gray-900/90 border border-gray-700 rounded-2xl p-6 max-w-md w-full">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <AlertTriangle className="h-8 w-8 text-white" />
@@ -244,7 +265,7 @@ const EndPage: React.FC = () => {
                 <button
                   onClick={() => setShowResetConfirm(false)}
                   disabled={resetting}
-                  className="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-semibold transition-all duration-200"
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold transition-all duration-200"
                 >
                   Hủy
                 </button>
@@ -260,17 +281,8 @@ const EndPage: React.FC = () => {
           </div>
         )}
 
-        {/* Back to Dashboard */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => navigate('/admin')}
-            className="text-white/70 hover:text-white transition-colors text-sm sm:text-base"
-          >
-            ← Về Admin Dashboard
-          </button>
-        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

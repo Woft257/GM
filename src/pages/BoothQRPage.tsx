@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QrCode, Download, Copy, CheckCircle } from 'lucide-react';
-import Layout from '../components/Layout';
+
 import { generateBoothQR } from '../lib/boothQR';
 import { BoothQR } from '../types';
 import { physicalBooths } from '../data/booths';
@@ -58,24 +58,45 @@ const BoothQRPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout title="Tạo QR Codes cho Booth">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mx-auto mb-6"></div>
-          <p className="text-white/70">Đang tạo QR codes...</p>
+      <div className="min-h-screen bg-black">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white/70">Đang tạo QR codes...</p>
+          </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout title="QR Codes cho Booth">
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <QrCode className="h-8 w-8 text-white" />
+    <div className="min-h-screen bg-black">
+      {/* MEXC-style Header */}
+      <div className="bg-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button
+                onClick={() => navigate('/admin')}
+                className="text-white/70 hover:text-white text-sm"
+              >
+                ← Về Dashboard
+              </button>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">QR Codes cho Booth</h1>
-          <p className="text-white/70">
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <div className="text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <QrCode className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">QR Codes cho Booth</h1>
+          <p className="text-white/70 text-sm sm:text-base">
             Mỗi booth có 1 QR code cố định. In và dán tại booth tương ứng.
           </p>
         </div>
@@ -86,7 +107,7 @@ const BoothQRPage: React.FC = () => {
             if (!boothQR) return null;
 
             return (
-              <div key={booth.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div key={booth.id} className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
                 <div className="text-center mb-4">
                   <h3 className="text-lg font-bold text-white mb-1">{booth.name}</h3>
                   <p className="text-white/60 text-sm">{booth.description}</p>
@@ -148,17 +169,8 @@ const BoothQRPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Back to Dashboard */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => navigate('/admin')}
-            className="text-white/70 hover:text-white transition-colors text-sm sm:text-base"
-          >
-            ← Về Admin Dashboard
-          </button>
-        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
