@@ -36,7 +36,8 @@ export interface BoothConfig {
 export interface PendingScore {
   id: string;
   boothId: string;
-  userTelegram: string;
+  username: string;
+  timestamp: number;
   status: 'waiting' | 'completed' | 'cancelled';
   points?: number; // Điểm được gán bởi admin
   createdAt: Date;

@@ -436,12 +436,12 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
 };
 
 // PendingScore operations
-export const createPendingScore = async (boothId: string, userTelegram: string): Promise<string> => {
+export const createPendingScore = async (boothId: string, username: string): Promise<string> => {
   // Check if user already has pending score for this booth
   const existingQuery = query(
     collection(db, PENDING_SCORES_COLLECTION),
     where('boothId', '==', boothId),
-    where('userTelegram', '==', userTelegram),
+    where('username', '==', username),
     where('status', '==', 'waiting')
   );
 
@@ -451,17 +451,19 @@ export const createPendingScore = async (boothId: string, userTelegram: string):
   }
 
   // Check if user already completed this booth
-  const user = await getUser(userTelegram);
+  const user = await getUser(username);
   if (user && user.playedBooths[boothId]) {
     throw new Error('Bạn đã hoàn thành booth này rồi');
   }
 
-  const pendingId = `${boothId}_${userTelegram}_${Date.now()}`;
+  const timestamp = Date.now();
+  const pendingId = `${boothId}_${username}_${timestamp}`;
   const pendingRef = doc(db, PENDING_SCORES_COLLECTION, pendingId);
 
   const pendingScore: Omit<PendingScore, 'id'> = {
     boothId,
-    userTelegram,
+    username,
+    timestamp,
     status: 'waiting',
     createdAt: new Date()
   };
