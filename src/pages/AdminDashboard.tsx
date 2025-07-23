@@ -12,7 +12,7 @@ import {
   Edit3,
   Gift
 } from 'lucide-react';
-import Layout from '../components/Layout';
+
 import { useUsers } from '../hooks/useUsers';
 import { useGameStatus } from '../hooks/useGameStatus';
 import { physicalBooths } from '../data/booths';
@@ -30,64 +30,68 @@ const AdminDashboard: React.FC = () => {
 
   if (loading || usersLoading) {
     return (
-      <Layout title="Admin Dashboard">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mx-auto mb-6"></div>
-          <p className="text-white/70">Đang tải dashboard...</p>
+      <div className="min-h-screen bg-black">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white/70">Đang tải dashboard...</p>
+          </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout title="Admin Dashboard">
-      <div className="space-y-6">
-        {/* Header - Mobile Optimized */}
-        <div className="text-center">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-          </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-white/70 text-sm sm:text-base">
-            Quản lý sự kiện GM Vietnam
-          </p>
-        </div>
-
-        {/* Game Status - Mobile Optimized */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 lg:p-6 border border-white/20">
-          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white">Trạng thái sự kiện</h2>
-            <div className={`px-3 py-2 rounded-full text-xs sm:text-sm font-semibold text-center ${
-              gameStatus === 'active'
-                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                : 'bg-red-500/20 text-red-400 border border-red-500/30'
-            }`}>
-              {gameStatus === 'active' ? '🟢 Đang diễn ra' : '🔴 Đã kết thúc'}
+    <div className="min-h-screen bg-black">
+      {/* MEXC-style Header */}
+      <div className="bg-black border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              {/* MEXC x GM Vietnam Collaboration Logo */}
+              <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-6 sm:h-8" />
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-4 w-4 text-purple-400" />
+                <span className="text-white/70 text-xs sm:text-sm">Admin Dashboard</span>
+              </div>
+              <div className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium ${
+                gameStatus === 'active'
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              }`}>
+                <span className="hidden sm:inline">{gameStatus === 'active' ? '🟢 Đang diễn ra' : '🔴 Đã kết thúc'}</span>
+                <span className="sm:hidden">{gameStatus === 'active' ? '🟢' : '🔴'}</span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
         {/* Stats Overview - Mobile First */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 text-center">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
             <Users className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-blue-400 mx-auto mb-1 sm:mb-2" />
             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{totalUsers}</div>
             <p className="text-white/60 text-xs sm:text-sm">Người chơi</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 text-center">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
             <Trophy className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-yellow-400 mx-auto mb-1 sm:mb-2" />
             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{topScore}</div>
             <p className="text-white/60 text-xs sm:text-sm">Điểm cao nhất</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 text-center">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
             <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-green-400 mx-auto mb-1 sm:mb-2" />
             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{avgScore}</div>
             <p className="text-white/60 text-xs sm:text-sm">Điểm TB</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 text-center">
+          <div className="bg-gray-900/50 border border-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
             <Settings className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-purple-400 mx-auto mb-1 sm:mb-2" />
             <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{physicalBooths.length}</div>
             <p className="text-white/60 text-xs sm:text-sm">Booth</p>
@@ -95,7 +99,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Quick Actions - Mobile Optimized */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 lg:p-6 border border-white/20">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3 sm:p-4 lg:p-6">
           <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-3 sm:mb-4">Quản lý nhanh</h2>
 
           <div className="grid gap-2 sm:gap-3 lg:gap-4 grid-cols-2 lg:grid-cols-4">
@@ -162,7 +166,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Booth Management - Mobile Optimized */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 lg:p-6 border border-white/20">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-3 sm:p-4 lg:p-6">
           <h2 className="text-base sm:text-lg lg:text-xl font-bold text-white mb-3 sm:mb-4">Phân bổ điểm Booth</h2>
 
           <div className="grid gap-2 sm:gap-3 lg:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -188,18 +192,8 @@ const AdminDashboard: React.FC = () => {
             ))}
           </div>
         </div>
-
-        {/* Back to Home - Mobile Optimized */}
-        <div className="text-center">
-          <button
-            onClick={() => navigate('/')}
-            className="text-white/70 hover:text-white active:text-white/90 transition-colors text-sm sm:text-base touch-manipulation py-2 px-4"
-          >
-            ← Về trang chủ
-          </button>
-        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
