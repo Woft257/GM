@@ -5,22 +5,22 @@ import { PendingScore } from '../types';
 
 const PENDING_SCORES_COLLECTION = 'pending-scores';
 
-export const usePendingScores = (userTelegram: string | null) => {
+export const usePendingScores = (username: string | null = null) => {
   const [pendingScores, setPendingScores] = useState<PendingScore[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userTelegram) {
-      setPendingScores([]);
-      setLoading(false);
-      return;
-    }
-
-    const q = query(
-      collection(db, PENDING_SCORES_COLLECTION),
-      where('userTelegram', '==', userTelegram),
-      where('status', '==', 'waiting')
-    );
+    // If username is provided, filter by user, otherwise get all pending scores
+    const q = username
+      ? query(
+          collection(db, PENDING_SCORES_COLLECTION),
+          where('username', '==', username),
+          where('status', '==', 'waiting')
+        )
+      : query(
+          collection(db, PENDING_SCORES_COLLECTION),
+          where('status', '==', 'waiting')
+        );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const scores = querySnapshot.docs.map(doc => {
@@ -28,7 +28,8 @@ export const usePendingScores = (userTelegram: string | null) => {
         return {
           id: data.id,
           boothId: data.boothId,
-          userTelegram: data.userTelegram,
+          username: data.username,
+          timestamp: data.timestamp,
           status: data.status,
           points: data.points,
           createdAt: data.createdAt?.toDate() || new Date(),
@@ -41,7 +42,7 @@ export const usePendingScores = (userTelegram: string | null) => {
     });
 
     return () => unsubscribe();
-  }, [userTelegram]);
+  }, [username]);
 
   return { pendingScores, loading };
 };

@@ -120,34 +120,37 @@ const BoothAllocationPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {boothMinigames.map((minigame) => (
-                    <div key={minigame.id} className="bg-gray-800/50 rounded-lg p-4">
-                      <h4 className="font-semibold text-white mb-3">{minigame.name}</h4>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[0, 25, 50].map((score) => (
-                          <button
-                            key={score}
-                            onClick={() => handleAllocateScore(pendingScore.username, minigame.id, score)}
-                            disabled={allocatingUser === pendingScore.username}
-                            className={`py-2 px-3 rounded-lg font-semibold transition-all duration-200 ${
-                              score === 0 
-                                ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40'
-                                : score === 25
-                                ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 border border-yellow-500/40'
-                                : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/40'
-                            } ${
-                              allocatingUser === pendingScore.username 
-                                ? 'opacity-50 cursor-not-allowed' 
-                                : 'hover:scale-105'
-                            }`}
-                          >
-                            {allocatingUser === pendingScore.username ? '...' : `${score} điểm`}
-                          </button>
-                        ))}
+                <div className="space-y-4">
+                  <p className="text-gray-300 text-sm">Chọn minigame và phân bổ điểm:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {boothMinigames.map((minigame) => (
+                      <div key={minigame.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                        <h4 className="font-semibold text-white mb-3 text-center">{minigame.name}</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[0, 25, 50].map((score) => (
+                            <button
+                              key={`${minigame.id}-${score}`}
+                              onClick={() => handleAllocateScore(pendingScore.username, minigame.id, score)}
+                              disabled={allocatingUser === pendingScore.username}
+                              className={`py-2 px-3 rounded-lg font-semibold transition-all duration-200 text-sm ${
+                                score === 0
+                                  ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40'
+                                  : score === 25
+                                  ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 border border-yellow-500/40'
+                                  : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/40'
+                              } ${
+                                allocatingUser === pendingScore.username
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : 'hover:scale-105'
+                              }`}
+                            >
+                              {allocatingUser === pendingScore.username ? '...' : `${score} điểm`}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
