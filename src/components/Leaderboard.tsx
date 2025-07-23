@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Trophy, Crown, Medal, Award } from 'lucide-react';
 import { User } from '../types';
 
@@ -17,6 +17,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
       default: return null;
     }
   };
+
+  // Memoize top 10 users to avoid unnecessary re-renders
+  const topUsers = useMemo(() => users.slice(0, 10), [users]);
 
   if (loading) {
     return (
@@ -37,7 +40,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
       </div>
 
       <div className="space-y-3">
-        {users.slice(0, 10).map((user, index) => {
+        {topUsers.map((user, index) => {
           const isCurrentUser = currentUser?.telegram === user.telegram;
 
           return (

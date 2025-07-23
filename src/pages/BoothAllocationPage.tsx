@@ -28,23 +28,29 @@ const BoothAllocationPage: React.FC = () => {
   useEffect(() => {
     const loadUserScores = async () => {
       const scores: Record<string, Record<string, number>> = {};
-      for (const pendingScore of boothPendingScores) {
-        if (!pendingScore.username) continue;
 
-        try {
-          const user = await getUser(pendingScore.username);
-          if (user && user.scores) {
-            scores[pendingScore.username] = user.scores;
+      // Use Promise.all for better performance
+      const userPromises = boothPendingScores
+        .filter(ps => ps.username)
+        .map(async (pendingScore) => {
+          try {
+            const user = await getUser(pendingScore.username);
+            if (user && user.scores) {
+              scores[pendingScore.username] = user.scores;
+            }
+          } catch (error) {
+            console.error(`Error loading scores for ${pendingScore.username}:`, error);
           }
-        } catch (error) {
-          console.error('Error loading user scores:', error);
-        }
-      }
+        });
+
+      await Promise.all(userPromises);
       setUserScores(scores);
     };
 
     if (boothPendingScores.length > 0) {
       loadUserScores();
+    } else {
+      setUserScores({});
     }
   }, [boothPendingScores]);
 
@@ -66,8 +72,21 @@ const BoothAllocationPage: React.FC = () => {
     const minigame = boothMinigames.find(m => m?.id === minigameId);
     const maxScore = minigame?.maxScore || 50;
 
-    if (score < 0 || score > maxScore) {
-      setNotification({ type: 'error', message: `Điểm phải từ 0 đến ${maxScore}` });
+    // Enhanced validation
+    if (!username || !minigameId) {
+      setNotification({ type: 'error', message: 'Thông tin không hợp lệ' });
+      setTimeout(() => setNotification(null), 3000);
+      return;
+    }
+
+    if (score < 0) {
+      setNotification({ type: 'error', message: 'Điểm không thể âm' });
+      setTimeout(() => setNotification(null), 3000);
+      return;
+    }
+
+    if (maxScore !== 999999 && score > maxScore) {
+      setNotification({ type: 'error', message: `Điểm tối đa cho ${minigame?.name} là ${maxScore}` });
       setTimeout(() => setNotification(null), 3000);
       return;
     }
@@ -75,7 +94,10 @@ const BoothAllocationPage: React.FC = () => {
     try {
       setAllocatingUser(username);
       await allocateScore(username, boothId!, minigameId, score);
-      setNotification({ type: 'success', message: `Đã phân bổ ${score} điểm ${minigameId} cho ${username}` });
+      setNotification({
+        type: 'success',
+        message: `Đã phân bổ ${score} điểm cho ${minigame?.name} - ${username}`
+      });
       setTimeout(() => setNotification(null), 3000);
 
       // Clear the score input
@@ -101,24 +123,26 @@ const BoothAllocationPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800">
+      <div className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0 flex-1">
               <button
                 onClick={() => navigate('/admin')}
-                className="mr-4 p-2 text-gray-400 hover:text-white transition-colors"
+                className="mr-3 sm:mr-4 p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800 flex-shrink-0"
+                title="Quay lại Dashboard"
               >
-                <ArrowLeft className="h-6 w-6" />
+                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
-              <div>
-                <h1 className="text-xl font-bold text-white">{booth.name}</h1>
-                <p className="text-gray-400 text-sm">{booth.description}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-bold text-white truncate">{booth.name}</h1>
+                <p className="text-gray-400 text-xs sm:text-sm truncate">{booth.description}</p>
               </div>
             </div>
-            <div className="flex items-center text-gray-300 bg-gray-800 px-3 py-2 rounded-lg">
-              <Users className="h-5 w-5 mr-2" />
-              <span>{boothPendingScores.length} chờ phân bổ</span>
+            <div className="flex items-center text-gray-300 bg-gray-800 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg ml-2 flex-shrink-0">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+              <span className="text-xs sm:text-sm font-medium">{boothPendingScores.length}</span>
+              <span className="hidden sm:inline ml-1">chờ phân bổ</span>
             </div>
           </div>
         </div>
