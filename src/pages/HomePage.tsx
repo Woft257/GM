@@ -9,10 +9,10 @@ import MexcBackground from '../components/MexcBackground';
 import { useAuth } from '../hooks/useAuth';
 import { useUsers, useUser } from '../hooks/useUsers';
 import { parseQRData, validateQRData } from '../lib/qrcode';
-import { useQRToken, useQRTokenBySimpleCode, createPendingScore } from '../lib/database';
+import { processQRToken, processQRTokenBySimpleCode, createPendingScore } from '../lib/database';
 import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { usePendingScores } from '../hooks/usePendingScores';
-import { getBoothName, physicalBooths, getMinigamesForBooth } from '../data/booths';
+import { getBoothName, getMinigamesForBooth } from '../data/booths';
 import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye, Gift } from 'lucide-react';
 import { isQRScanningAllowed } from '../lib/gameControl';
 import { useGameStatus } from '../hooks/useGameStatus';
@@ -42,17 +42,46 @@ const HomePage: React.FC = () => {
 
   // Listen for game reset events
   useEffect(() => {
+    const handleReset = () => {
+      console.log('Game reset detected. Clearing session and reloading.');
+      
+      // Clear all user-related session data
+      localStorage.removeItem('username');
+      localStorage.removeItem('telegram_username');
+      localStorage.removeItem('user_login_timestamp');
+      
+      // A full clear is more robust
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Force a hard reload to ensure all state is cleared
+      window.location.reload();
+    };
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'game_reset_timestamp') {
-        // Game was reset, logout user and reload
-        // Clear user session
-        localStorage.removeItem('username');
-        window.location.reload();
+        handleReset();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    // Fallback check in case the event listener doesn't fire
+    const interval = setInterval(() => {
+      const resetTimestamp = localStorage.getItem('game_reset_timestamp');
+      if (resetTimestamp) {
+        const lastKnownReset = sessionStorage.getItem('last_known_reset');
+        if (resetTimestamp !== lastKnownReset) {
+          sessionStorage.setItem('last_known_reset', resetTimestamp);
+          handleReset();
+        }
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   // Calculate user ranking when users data changes
@@ -116,7 +145,7 @@ const HomePage: React.FC = () => {
         const simpleCode = qrText.replace('SIMPLE_CODE:', '');
 
         // Use simple code
-        const points = await useQRTokenBySimpleCode(simpleCode, username);
+        const points = await processQRTokenBySimpleCode(simpleCode, username);
 
         setScanResult({
           success: true,
@@ -135,7 +164,7 @@ const HomePage: React.FC = () => {
         const userScores = user?.scores || {};
 
         const completedMinigames = boothMinigames.filter(minigame =>
-          userScores[minigame.id] !== undefined && userScores[minigame.id] > 0
+          minigame && userScores[minigame.id] !== undefined && userScores[minigame.id] > 0
         );
 
         if (completedMinigames.length === boothMinigames.length) {
@@ -158,10 +187,11 @@ const HomePage: React.FC = () => {
             isPending: true,
             boothId: boothQRData.boothId
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm';
           setScanResult({
             success: false,
-            message: error.message || 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm'
+            message: errorMessage
           });
         }
         return;
@@ -172,7 +202,7 @@ const HomePage: React.FC = () => {
 
       if (qrData && validateQRData(qrData)) {
         // Use QR token (old system)
-        const points = await useQRToken(qrData.tokenId, username);
+        const points = await processQRToken(qrData.tokenId, username);
 
         setScanResult({
           success: true,
@@ -188,10 +218,11 @@ const HomePage: React.FC = () => {
         message: 'QR code không hợp lệ hoặc không phải QR code của GM Vietnam'
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi xử lý QR code';
       setScanResult({
         success: false,
-        message: error.message || 'Có lỗi xảy ra khi xử lý QR code'
+        message: errorMessage
       });
     }
   };
@@ -289,8 +320,9 @@ const HomePage: React.FC = () => {
                     try {
                       setLoginError('');
                       await login(username);
-                    } catch (error: any) {
-                      setLoginError(error.message || 'Có lỗi xảy ra khi đăng nhập');
+                    } catch (error: unknown) {
+                      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi đăng nhập';
+                      setLoginError(errorMessage);
                     }
                   }} />
                   {loginError && (

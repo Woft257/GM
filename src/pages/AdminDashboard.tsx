@@ -16,6 +16,7 @@ import {
 import { useUsers } from '../hooks/useUsers';
 import { useGameStatus } from '../hooks/useGameStatus';
 import { physicalBooths } from '../data/booths';
+import { triggerGlobalReload } from '../lib/database';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -170,6 +171,28 @@ const AdminDashboard: React.FC = () => {
               <div className="text-left min-w-0">
                 <div className="text-xs sm:text-sm lg:text-base font-semibold">Kết quả</div>
                 <div className="text-xs text-white/80 truncate">Xem bảng xếp hạng</div>
+              </div>
+            </button>
+
+            {/* Global Reload */}
+            <button
+              onClick={async () => {
+                if (window.confirm('Bạn có chắc chắn muốn buộc tất cả người dùng tải lại trang không? Hành động này không thể hoàn tác.')) {
+                  try {
+                    await triggerGlobalReload();
+                    alert('Đã gửi lệnh tải lại trang cho tất cả người dùng.');
+                  } catch (error) {
+                    console.error('Lỗi khi gửi lệnh tải lại trang:', error);
+                    alert('Không thể gửi lệnh tải lại trang. Vui lòng thử lại.');
+                  }
+                }
+              }}
+              className="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-700 hover:to-gray-900 active:from-gray-800 active:to-gray-950 text-white p-2 sm:p-4 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-1 sm:space-x-3 touch-manipulation active:scale-95 min-h-[60px] sm:min-h-[80px]"
+            >
+              <Clock className="h-4 w-4 sm:h-6 sm:w-6 flex-shrink-0" />
+              <div className="text-left min-w-0">
+                <div className="text-xs sm:text-base font-semibold">Tải lại trang</div>
+                <div className="text-xs text-white/80 truncate hidden sm:block">Buộc tất cả người dùng tải lại</div>
               </div>
             </button>
           </div>

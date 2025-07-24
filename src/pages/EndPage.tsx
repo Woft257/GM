@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, Users, RotateCcw, AlertTriangle, Crown, Medal, Award } from 'lucide-react';
 
@@ -6,9 +6,9 @@ import { useUsers } from '../hooks/useUsers';
 import { useGameStatus } from '../hooks/useGameStatus';
 import {
   setGameStatus,
-  resetAllData,
-  GameStatus
+  resetAllData
 } from '../lib/gameControl';
+import { triggerGlobalReload } from '../lib/database';
 
 const EndPage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,17 +46,17 @@ const EndPage: React.FC = () => {
     try {
       setResetting(true);
       await resetAllData();
+      await triggerGlobalReload(); // Trigger global reload after data reset
       await setGameStatus('active');
       setShowResetConfirm(false);
 
-      // Clear all client-side cached data
+      // Clear all client-side cached data (this will be handled by the global reload listener)
       localStorage.clear();
       sessionStorage.clear();
 
-      alert('Đã reset thành công! Trang sẽ tự động tải lại.');
+      alert('Đã reset thành công! Tất cả trang sẽ tự động tải lại.');
 
-      // Force reload immediately to show clean state
-      window.location.reload();
+      // No need to force reload here, App.tsx listener will handle it
     } catch (error) {
       console.error('Error resetting game:', error);
       alert('Có lỗi khi reset game');

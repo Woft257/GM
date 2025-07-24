@@ -16,14 +16,14 @@ import {
   deleteField
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { User, PendingScore, BoothQR } from '../types';
+import { User, PendingScore } from '../types';
 import { isGameActive } from './gameControl';
 
 // Collections
 const USERS_COLLECTION = 'users';
 const QR_TOKENS_COLLECTION = 'qr-tokens';
 const PENDING_SCORES_COLLECTION = 'pending-scores';
-const BOOTH_QRS_COLLECTION = 'booth-qrs';
+const ADMIN_CONTROLS_COLLECTION = 'admin-controls';
 
 // User operations
 export const createUser = async (telegram: string): Promise<User> => {
@@ -297,7 +297,7 @@ export const createQRToken = async (boothId: string, points: number): Promise<{ 
   return { tokenId, simpleCode };
 };
 
-export const useQRToken = async (tokenId: string, telegram: string): Promise<number> => {
+export const processQRToken = async (tokenId: string, telegram: string): Promise<number> => {
   const tokenRef = doc(db, QR_TOKENS_COLLECTION, tokenId);
   const tokenDoc = await getDoc(tokenRef);
 
@@ -355,7 +355,7 @@ export const getQRToken = async (tokenId: string): Promise<QRToken | null> => {
 };
 
 // Function to use QR token by simple code
-export const useQRTokenBySimpleCode = async (simpleCode: string, telegram: string): Promise<number> => {
+export const processQRTokenBySimpleCode = async (simpleCode: string, telegram: string): Promise<number> => {
   const tokensRef = collection(db, QR_TOKENS_COLLECTION);
   const now = new Date();
 
@@ -398,7 +398,7 @@ export const useQRTokenBySimpleCode = async (simpleCode: string, telegram: strin
     });
 
     return validTokenData.points;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error using simple code:', error);
     throw error;
   }
@@ -487,7 +487,8 @@ export const getPendingScore = async (pendingId: string): Promise<PendingScore |
   return {
     id: data.id,
     boothId: data.boothId,
-    userTelegram: data.userTelegram,
+    username: data.username,
+    timestamp: data.timestamp,
     status: data.status,
     points: data.points,
     createdAt: data.createdAt?.toDate() || new Date(),
@@ -506,13 +507,14 @@ export const getPendingScoresByBooth = async (boothId: string): Promise<PendingS
 
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: data.id,
-      boothId: data.boothId,
-      userTelegram: data.userTelegram,
-      status: data.status,
-      points: data.points,
+  const data = doc.data();
+  return {
+    id: data.id,
+    boothId: data.boothId,
+    username: data.username,
+    timestamp: data.timestamp,
+    status: data.status,
+    points: data.points,
       createdAt: data.createdAt?.toDate() || new Date(),
       completedAt: data.completedAt?.toDate(),
       completedBy: data.completedBy
@@ -541,7 +543,7 @@ export const completePendingScore = async (
   const batch = writeBatch(db);
 
   // Update user score
-  const userRef = doc(db, USERS_COLLECTION, pendingData.userTelegram);
+  const userRef = doc(db, USERS_COLLECTION, pendingData.username);
   const userDoc = await getDoc(userRef);
 
   if (userDoc.exists()) {
@@ -582,7 +584,8 @@ export const subscribeToPendingScore = (
       const pendingScore: PendingScore = {
         id: data.id,
         boothId: data.boothId,
-        userTelegram: data.userTelegram,
+        username: data.username,
+        timestamp: data.timestamp,
         status: data.status,
         points: data.points,
         createdAt: data.createdAt?.toDate() || new Date(),
@@ -609,13 +612,14 @@ export const subscribeToPendingScoresByBooth = (
 
   return onSnapshot(q, (querySnapshot) => {
     const pendingScores = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: data.id,
-        boothId: data.boothId,
-        userTelegram: data.userTelegram,
-        status: data.status,
-        points: data.points,
+  const data = doc.data();
+  return {
+    id: data.id,
+    boothId: data.boothId,
+    username: data.username,
+    timestamp: data.timestamp,
+    status: data.status,
+    points: data.points,
         createdAt: data.createdAt?.toDate() || new Date(),
         completedAt: data.completedAt?.toDate(),
         completedBy: data.completedBy
@@ -759,6 +763,31 @@ export const updateUserReward = async (username: string, rewardId: string, claim
     console.error('Error updating user reward:', error);
     throw error;
   }
+};
+
+// Admin control functions
+export const triggerGlobalReload = async (): Promise<void> => {
+  try {
+    const adminControlsRef = doc(db, ADMIN_CONTROLS_COLLECTION, 'globalSettings');
+    await setDoc(adminControlsRef, { reloadTrigger: serverTimestamp() }, { merge: true });
+    console.log('Global reload triggered successfully.');
+  } catch (error) {
+    console.error('Error triggering global reload:', error);
+    throw error;
+  }
+};
+
+export const subscribeToGlobalReload = (callback: (timestamp: Date | null) => void) => {
+  const adminControlsRef = doc(db, ADMIN_CONTROLS_COLLECTION, 'globalSettings');
+  return onSnapshot(adminControlsRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      const reloadTimestamp = data.reloadTrigger?.toDate() || null;
+      callback(reloadTimestamp);
+    } else {
+      callback(null);
+    }
+  });
 };
 
 // Function to clear all pending scores (for reset)
