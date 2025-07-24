@@ -55,10 +55,8 @@ const EndPage: React.FC = () => {
 
       alert('Đã reset thành công! Trang sẽ tự động tải lại.');
 
-      // Force reload to clear all client-side state
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Force reload immediately to show clean state
+      window.location.reload();
     } catch (error) {
       console.error('Error resetting game:', error);
       alert('Có lỗi khi reset game');
