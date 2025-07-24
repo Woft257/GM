@@ -13,9 +13,9 @@ interface UserProgressProps {
 const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers }) => {
   const { pendingScores } = usePendingScores(user.telegram);
 
-  const completedBooths = Object.keys(user.playedBooths).filter(boothId => user.playedBooths[boothId]);
+  const completedMinigames = Object.keys(user.scores || {}).filter(key => user.scores![key] > 0);
   const pendingBooths = pendingScores.map(ps => ps.boothId);
-  const completionRate = (completedBooths.length / booths.length) * 100;
+  const completionRate = (completedMinigames.length / booths.length) * 100;
 
   return (
     <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 sm:p-6">
@@ -48,7 +48,7 @@ const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers 
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="text-gray-300 text-sm">Hoàn thành</span>
-          <span className="text-gray-300 text-sm">{completedBooths.length}/{booths.length} booth</span>
+          <span className="text-gray-300 text-sm">{completedMinigames.length}/{booths.length} minigame</span>
         </div>
         <div className="w-full bg-gray-700/50 rounded-full h-2">
           <div
@@ -61,7 +61,7 @@ const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers 
       <div className="space-y-3">
         <h4 className="text-lg font-semibold text-white mb-4">Danh sách các Minigame</h4>
         {booths.map((booth) => {
-          const isCompleted = user.playedBooths[booth.id] || (user.scores && user.scores[booth.id] > 0);
+          const isCompleted = user.scores && user.scores[booth.id] > 0;
           const isPending = pendingBooths.includes(booth.id);
           const userScore = user.scores?.[booth.id] || 0;
 

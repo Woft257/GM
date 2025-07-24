@@ -378,8 +378,8 @@ const ScoreManagement: React.FC = () => {
                       </div>
                       <p className="text-xs sm:text-sm text-white/70">
                         Tổng điểm: <span className="font-semibold text-yellow-400">{user.totalScore}</span>
-                        {user.playedBooths && Object.keys(user.playedBooths).length > 0 && (
-                          <span className="ml-2">• {Object.keys(user.playedBooths).length} booth</span>
+                        {user.scores && Object.keys(user.scores).filter(key => user.scores![key] > 0).length > 0 && (
+                          <span className="ml-2">• {Object.keys(user.scores).filter(key => user.scores![key] > 0).length} minigame</span>
                         )}
                       </p>
                     </div>

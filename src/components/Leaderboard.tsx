@@ -77,7 +77,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
                     )}
                   </div>
                   <p className="text-gray-400 text-sm">
-                    {Object.keys(user.playedBooths || {}).length} booth đã chơi
+                    {Object.keys(user.scores || {}).filter(key => user.scores![key] > 0).length} minigame đã chơi
                   </p>
                 </div>
               </div>
