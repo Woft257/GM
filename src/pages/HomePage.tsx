@@ -419,7 +419,7 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Rewards Section */}
-        {user && !gameEnded && (
+        {user && (
           <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-6 backdrop-blur-sm">
             <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-3 sm:mb-6">
               <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
