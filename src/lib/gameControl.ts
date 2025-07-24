@@ -4,7 +4,6 @@ import {
   setDoc, 
   collection, 
   getDocs, 
-  deleteDoc,
   writeBatch,
   serverTimestamp 
 } from 'firebase/firestore';
@@ -162,8 +161,26 @@ export const resetAllData = async (): Promise<void> => {
     localStorage.removeItem('admin_auth_timestamp');
     localStorage.removeItem('username'); // Also clear this key
 
-    // Broadcast reset event to all tabs/windows
+    // Broadcast reset event to all tabs/windows using multiple methods
     localStorage.setItem('game_reset_timestamp', resetTimestamp.toString());
+    
+    // Also use sessionStorage to ensure cross-tab communication
+    sessionStorage.setItem('game_reset_timestamp', resetTimestamp.toString());
+    
+    // Dispatch custom event for immediate detection
+    window.dispatchEvent(new CustomEvent('gameReset', { 
+      detail: { timestamp: resetTimestamp } 
+    }));
+
+    // Use BroadcastChannel for better cross-tab communication
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('game_reset');
+      channel.postMessage({ 
+        type: 'GAME_RESET', 
+        timestamp: resetTimestamp 
+      });
+      channel.close();
+    }
 
     console.log('Game reset completed successfully');
   } catch (error) {
