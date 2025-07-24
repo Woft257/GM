@@ -194,9 +194,9 @@ const ResultsPage: React.FC = () => {
                   </div>
                   <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-3 sm:p-4">
                     <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                      {Object.keys(currentUser.playedBooths || {}).length}
+                      {Object.keys(currentUser.scores || {}).filter(key => currentUser.scores![key] > 0).length}
                     </div>
-                    <p className="text-gray-400 text-xs sm:text-sm mt-1">Booth hoàn thành</p>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-1">Minigame hoàn thành</p>
                   </div>
                 </div>
               </div>
@@ -300,7 +300,7 @@ const ResultsPage: React.FC = () => {
                       )}
                     </div>
                     <p className="text-gray-400 text-sm">
-                      {Object.keys(user.playedBooths || {}).length} booth hoàn thành
+                      {Object.keys(user.scores || {}).filter(key => user.scores![key] > 0).length} minigame hoàn thành
                     </p>
                   </div>
                 </div>

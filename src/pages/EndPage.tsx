@@ -237,7 +237,7 @@ const EndPage: React.FC = () => {
                   <div>
                     <p className="font-semibold text-white">{user.telegram}</p>
                     <p className="text-white/60 text-sm">
-                      {Object.keys(user.playedBooths || {}).length} booth hoàn thành
+                      {Object.keys(user.scores || {}).filter(key => user.scores![key] > 0).length} minigame hoàn thành
                     </p>
                   </div>
                 </div>
