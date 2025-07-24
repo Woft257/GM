@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, Users, Trophy, Star, Search, X, Calendar } from 'lucide-react';
+import { ArrowLeft, Gift, Users, Trophy, Star, Search, X, Calendar, Trash2 } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
+import { updateUserReward } from '../lib/database';
 
 
 const RewardDetails: React.FC = () => {
   const navigate = useNavigate();
   const { users, loading } = useUsers();
   const [searchTerm, setSearchTerm] = useState('');
+  const [removingReward, setRemovingReward] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<{ username: string; rewardName: string } | null>(null);
 
   const rewardMilestones = [
     { id: 'reward1', name: 'Phần thưởng 1', icon: <Gift className="h-4 w-4" />, color: 'from-green-500 to-emerald-500' },
@@ -44,6 +47,42 @@ const RewardDetails: React.FC = () => {
     return Object.values(rewards).some(claimed => claimed);
   }).length;
 
+  const handleRemoveReward = async (username: string) => {
+    if (!showConfirmDialog) return;
+
+    try {
+      setRemovingReward(username);
+
+      // Find which reward the user has claimed
+      const user = users.find(u => u.telegram === username);
+      if (!user || !user.rewards) return;
+
+      const claimedRewardId = Object.keys(user.rewards).find(key => user.rewards![key]);
+      if (!claimedRewardId) return;
+
+      // Remove the reward by setting it to false
+      await updateUserReward(username, claimedRewardId, false);
+
+      setShowConfirmDialog(null);
+      setRemovingReward(null);
+
+      // Show success message and option to go back
+      const goBack = confirm('Đã bỏ gán thưởng thành công!\n\nBạn có muốn quay lại trang cấp thưởng không?');
+      if (goBack) {
+        navigate('/admin/rewards');
+      }
+
+    } catch (error) {
+      console.error('Error removing reward:', error);
+      alert('Có lỗi khi bỏ gán thưởng');
+      setRemovingReward(null);
+    }
+  };
+
+  const confirmRemoveReward = (username: string, rewardName: string) => {
+    setShowConfirmDialog({ username, rewardName });
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* MEXC-style Header */}
@@ -78,10 +117,24 @@ const RewardDetails: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-center">
-          <div className="flex items-center text-white/80 bg-gray-900/50 border border-gray-800 px-4 py-2 rounded-lg">
-            <Users className="h-4 w-4 mr-2" />
-            <span className="font-medium">{totalRewardedUsers} người đã nhận thưởng</span>
+        <div className="space-y-4">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center text-white/80 bg-gray-900/50 border border-gray-800 px-4 py-2 rounded-lg">
+              <Users className="h-4 w-4 mr-2" />
+              <span className="font-medium">{totalRewardedUsers} người đã nhận thưởng</span>
+            </div>
+          </div>
+
+          {/* Info about remove function */}
+          <div className="flex justify-center">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 max-w-md">
+              <div className="flex items-start space-x-2">
+                <Trash2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-blue-300 text-sm">
+                  Bạn có thể <strong>bỏ gán thưởng</strong> cho người chơi bằng cách nhấn nút "Bỏ gán" trên mỗi thẻ người chơi.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -170,16 +223,30 @@ const RewardDetails: React.FC = () => {
                         </div>
                         
                         {reward && (
-                          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
+                          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2 mb-3">
                             <p className="text-green-400 text-sm font-medium">
                               ✅ {reward.name}
                             </p>
                           </div>
                         )}
-                        
-                        <div className="mt-2 flex items-center text-gray-400 text-xs">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-gray-400 text-xs">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
+                          </div>
+
+                          {reward && (
+                            <button
+                              onClick={() => confirmRemoveReward(user.telegram, reward.name)}
+                              disabled={removingReward === user.telegram}
+                              className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 px-2 py-1 rounded text-xs font-medium transition-all duration-200 flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Bỏ gán thưởng"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              <span>{removingReward === user.telegram ? 'Đang xử lý...' : 'Bỏ gán'}</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -197,6 +264,39 @@ const RewardDetails: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="h-6 w-6 text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Xác nhận bỏ gán thưởng</h3>
+              <p className="text-gray-300 mb-6">
+                Bạn có chắc chắn muốn bỏ gán thưởng <strong className="text-yellow-400">{showConfirmDialog.rewardName}</strong>
+                {' '}của người chơi <strong className="text-cyan-400">{showConfirmDialog.username}</strong>?
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowConfirmDialog(null)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={() => handleRemoveReward(showConfirmDialog.username)}
+                  disabled={removingReward === showConfirmDialog.username}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {removingReward === showConfirmDialog.username ? 'Đang xử lý...' : 'Xác nhận'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
