@@ -428,6 +428,20 @@ const HomePage: React.FC = () => {
               <h3 className="text-lg sm:text-xl font-bold text-white">Phần thưởng</h3>
             </div>
 
+            {/* Lưu ý quan trọng */}
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+              <div className="flex items-start space-x-2">
+                <span className="text-yellow-400 text-lg flex-shrink-0">⚠️</span>
+                <div>
+                  <p className="text-yellow-300 text-sm font-semibold mb-1">Lưu ý quan trọng:</p>
+                  <p className="text-yellow-200 text-xs sm:text-sm">
+                    Mỗi người chơi chỉ được đổi <strong>1 phần quà duy nhất</strong> tại booth nhận thưởng.
+                    Hãy cân nhắc kỹ trước khi chọn phần thưởng!
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-3 sm:gap-4">
               {/* Reward milestones */}
               {(() => {
