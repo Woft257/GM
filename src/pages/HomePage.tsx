@@ -559,37 +559,8 @@ const HomePage: React.FC = () => {
               })()}
             </div>
 
-            {/* Notice about reward limitation
-            {(() => {
-              const completedMinigames = user?.scores ? Object.keys(user.scores).filter(key => (user.scores?.[key] || 0) > 0).length : 0;
-              const hasAnyReward = user.rewards && Object.values(user.rewards).some(claimed => claimed);
-              const eligibleRewards = [
-                { minGames: 1 },
-                { minGames: 3 },
-                { minGames: 5 }
-              ].filter(reward => completedMinigames >= reward.minGames);
-
-              if (eligibleRewards.length > 1 && !hasAnyReward) {
-                return (
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
-                    <div className="flex items-start space-x-2">
-                      <span className="text-yellow-400 text-lg flex-shrink-0">⚠️</span>
-                        <div>
-                        <p className="text-yellow-300 text-sm font-semibold mb-1">Lưu ý quan trọng:</p>
-                        <p className="text-yellow-200 text-xs sm:text-sm"></p>
-                        <p className="text-blue-200 text-xs sm:text-sm leading-relaxed">
-                          Bạn đủ điều kiện nhận {eligibleRewards.length} phần thưởng, nhưng chỉ được chọn đổi <span className="font-semibold">1 phần thưởng duy nhất</span>.
-                          Hãy cân nhắc kỹ trước khi đổi tại Booth Souvenir
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
           </div>
-        )} */}
+        )}
 
         {/* User Progress - Desktop */}
         <div className="hidden sm:block">
