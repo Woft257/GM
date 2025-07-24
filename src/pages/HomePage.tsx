@@ -459,8 +459,8 @@ const HomePage: React.FC = () => {
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-white">Phần thưởng</h3>
             </div>
-{/* 
-            Lưu ý quan trọng
+
+            {/* Lưu ý quan trọng */}
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
               <div className="flex items-start space-x-2">
                 <span className="text-yellow-400 text-lg flex-shrink-0">⚠️</span>
@@ -472,7 +472,7 @@ const HomePage: React.FC = () => {
                   </p>
                 </div>
               </div>
-            </div> */}
+            </div>
 
             <div className="grid gap-3 sm:gap-4">
               {/* Reward milestones */}
@@ -559,7 +559,7 @@ const HomePage: React.FC = () => {
               })()}
             </div>
 
-            {/* Notice about reward limitation */}
+            {/* Notice about reward limitation
             {(() => {
               const completedMinigames = user?.scores ? Object.keys(user.scores).filter(key => (user.scores?.[key] || 0) > 0).length : 0;
               const hasAnyReward = user.rewards && Object.values(user.rewards).some(claimed => claimed);
@@ -589,7 +589,7 @@ const HomePage: React.FC = () => {
               return null;
             })()}
           </div>
-        )}
+        )} */}
 
         {/* User Progress - Desktop */}
         <div className="hidden sm:block">
