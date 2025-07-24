@@ -59,10 +59,68 @@ export const isGameActive = async (): Promise<boolean> => {
   return status === 'active';
 };
 
+// Get the last reset timestamp from database
+export const getLastResetTimestamp = async (): Promise<number | null> => {
+  try {
+    const resetRef = doc(db, GAME_CONTROL_COLLECTION, 'lastReset');
+    const resetDoc = await getDoc(resetRef);
+
+    if (resetDoc.exists()) {
+      return resetDoc.data().timestamp || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting last reset timestamp:', error);
+    return null;
+  }
+};
+
+// Check if local storage needs to be cleared based on reset timestamp
+export const checkAndClearLocalStorage = async (): Promise<boolean> => {
+  try {
+    const lastResetTimestamp = await getLastResetTimestamp();
+    const userLoginTimestamp = localStorage.getItem('user_login_timestamp');
+
+    if (lastResetTimestamp && userLoginTimestamp) {
+      const userTimestamp = parseInt(userLoginTimestamp);
+
+      // If database reset timestamp is newer than user's login timestamp, clear local storage
+      if (lastResetTimestamp > userTimestamp) {
+        console.log('Clearing local storage due to game reset');
+
+        // Clear all user-related local storage
+        localStorage.removeItem('telegram_username');
+        localStorage.removeItem('username');
+        localStorage.removeItem('user_login_timestamp');
+
+        // Clear session storage as well
+        sessionStorage.clear();
+
+        return true; // Indicates that storage was cleared
+      }
+    }
+
+    return false; // No clearing needed
+  } catch (error) {
+    console.error('Error checking local storage:', error);
+    return false;
+  }
+};
+
 // Reset all game data
 export const resetAllData = async (): Promise<void> => {
   try {
     console.log('Starting game reset...');
+
+    // Store reset timestamp in database first
+    const resetTimestamp = Date.now();
+    const resetRef = doc(db, GAME_CONTROL_COLLECTION, 'lastReset');
+    await setDoc(resetRef, {
+      timestamp: resetTimestamp,
+      resetAt: serverTimestamp(),
+      resetBy: 'admin'
+    });
 
     // First, explicitly clear pending scores using the dedicated function
     console.log('Clearing pending scores with dedicated function...');
@@ -105,7 +163,7 @@ export const resetAllData = async (): Promise<void> => {
     localStorage.removeItem('username'); // Also clear this key
 
     // Broadcast reset event to all tabs/windows
-    localStorage.setItem('game_reset_timestamp', Date.now().toString());
+    localStorage.setItem('game_reset_timestamp', resetTimestamp.toString());
 
     console.log('Game reset completed successfully');
   } catch (error) {
