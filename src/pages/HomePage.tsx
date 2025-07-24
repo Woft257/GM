@@ -419,7 +419,7 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Rewards Section */}
-        {user && !gameEnded && (
+        {user && (
           <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-6 backdrop-blur-sm">
             <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-3 sm:mb-6">
               <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
@@ -435,7 +435,7 @@ const HomePage: React.FC = () => {
                 <div>
                   <p className="text-yellow-300 text-sm font-semibold mb-1">Lưu ý quan trọng:</p>
                   <p className="text-yellow-200 text-xs sm:text-sm">
-                    Mỗi người chơi chỉ được đổi <strong>1 phần quà duy nhất</strong> tại booth nhận thưởng.
+                    Mỗi người chơi chỉ được đổi <strong>1 phần quà duy nhất</strong> tại Booth Souvenir.
                     Hãy cân nhắc kỹ trước khi chọn phần thưởng!
                   </p>
                 </div>
