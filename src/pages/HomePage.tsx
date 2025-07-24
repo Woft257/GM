@@ -435,7 +435,7 @@ const HomePage: React.FC = () => {
                 <div>
                   <p className="text-yellow-300 text-sm font-semibold mb-1">Lưu ý quan trọng:</p>
                   <p className="text-yellow-200 text-xs sm:text-sm">
-                    Mỗi người chơi chỉ được đổi <strong>1 phần quà duy nhất</strong> tại booth nhận thưởng.
+                    Mỗi người chơi chỉ được đổi <strong>1 phần quà duy nhất</strong> tại Booth Souvenir.
                     Hãy cân nhắc kỹ trước khi chọn phần thưởng!
                   </p>
                 </div>
