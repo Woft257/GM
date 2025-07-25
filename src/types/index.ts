@@ -1,5 +1,6 @@
 export interface User {
   telegram: string;
+  mexcUID?: string; // New field for MEXC UID
   totalScore: number;
   playedBooths: Record<string, boolean>;
   scores?: Record<string, number>; // New field for booth scores

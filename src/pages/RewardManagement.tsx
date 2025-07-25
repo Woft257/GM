@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X } from 'lucide-react';
+import { Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
 import { updateUserReward } from '../lib/database';
+import { User } from '../types';
 
 
 const RewardManagement: React.FC = () => {
@@ -12,18 +13,14 @@ const RewardManagement: React.FC = () => {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Debug logging
-  console.log('RewardManagement - users:', users);
-  console.log('RewardManagement - loading:', loading);
-
   const rewardMilestones = [
     { id: 'reward1', name: 'Phần thưởng 1', minGames: 1, maxGames: 2 },
     { id: 'reward2', name: 'Phần thưởng 2', minGames: 3, maxGames: 4 },
     { id: 'reward3', name: 'Phần thưởng 3', minGames: 5, maxGames: 6 }
   ];
 
-  const getCompletedMinigames = (user: any) => {
-    return user.scores ? Object.keys(user.scores).filter(key => user.scores[key] > 0).length : 0;
+  const getCompletedMinigames = (user: User) => {
+    return user.scores ? Object.keys(user.scores).filter(key => user.scores![key] > 0).length : 0;
   };
 
   // Filter users based on search term
@@ -44,9 +41,9 @@ const RewardManagement: React.FC = () => {
     });
   };
 
-  const getClaimedUsers = (rewardId: string) => {
-    return filteredUsers.filter(user => user.rewards?.[rewardId] || false);
-  };
+  // const getClaimedUsers = (rewardId: string) => { // 'getClaimedUsers' is assigned a value but never used.
+  //   return filteredUsers.filter(user => user.rewards?.[rewardId] || false);
+  // };
 
   const handleUpdateReward = async (username: string, rewardId: string, claimed: boolean) => {
     if (updatingUser) return;
@@ -74,9 +71,10 @@ const RewardManagement: React.FC = () => {
         message: `Đã ${claimed ? 'cấp' : 'hủy'} ${rewardMilestones.find(r => r.id === rewardId)?.name} cho ${username}`
       });
       setTimeout(() => setNotification(null), 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating reward:', error);
-      setNotification({ type: 'error', message: error.message || 'Có lỗi xảy ra' });
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+      setNotification({ type: 'error', message: errorMessage });
       setTimeout(() => setNotification(null), 3000);
     } finally {
       setUpdatingUser(null);
@@ -204,7 +202,7 @@ const RewardManagement: React.FC = () => {
 
             {rewardMilestones.map((milestone) => {
               const eligibleUsers = getEligibleUsers(milestone.id);
-              const claimedUsers = getClaimedUsers(milestone.id);
+              // const claimedUsers = getClaimedUsers(milestone.id); // 'claimedUsers' is assigned a value but never used.
 
               return (
                 <div key={milestone.id} className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
@@ -240,6 +238,9 @@ const RewardManagement: React.FC = () => {
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-semibold text-white">{user.telegram}</p>
+                                {user.mexcUID && (
+                                  <p className="text-gray-400 text-xs mt-1">MEXC UID: {user.mexcUID}</p>
+                                )}
                                 <p className="text-yellow-400 text-sm">
                                   {getCompletedMinigames(user)} minigame hoàn thành
                                 </p>

@@ -200,6 +200,9 @@ const EndPage: React.FC = () => {
                   </div>
                   {index < 3 && <h3 className="text-lg font-bold text-white mb-1">#{index + 1}</h3>}
                   <p className="text-white/90 font-semibold mb-2">{user.telegram}</p>
+                  {user.mexcUID && (
+                    <p className="text-white/70 text-xs mb-2">MEXC UID: {user.mexcUID}</p>
+                  )}
                   <div className="text-2xl font-bold text-white">{user.totalScore}</div>
                   <p className="text-white/60 text-sm">điểm</p>
                 </div>
@@ -234,6 +237,9 @@ const EndPage: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-white">{user.telegram}</p>
+                    {user.mexcUID && (
+                      <p className="text-white/60 text-xs mt-1">MEXC UID: {user.mexcUID}</p>
+                    )}
                     <p className="text-white/60 text-sm">
                       {Object.keys(user.scores || {}).filter(key => user.scores![key] > 0).length} minigame hoàn thành
                     </p>

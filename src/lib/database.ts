@@ -13,7 +13,9 @@ import {
   onSnapshot,
   Timestamp,
   writeBatch,
-  deleteField
+  deleteField,
+  QueryDocumentSnapshot,
+  DocumentData
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, PendingScore } from '../types';
@@ -26,14 +28,19 @@ const PENDING_SCORES_COLLECTION = 'pending-scores';
 const ADMIN_CONTROLS_COLLECTION = 'admin-controls';
 
 // User operations
-export const createUser = async (telegram: string): Promise<User> => {
+export const createUser = async (telegram: string, mexcUID?: string): Promise<User> => {
   const userRef = doc(db, USERS_COLLECTION, telegram);
   const userDoc = await getDoc(userRef);
 
   if (userDoc.exists()) {
     const data = userDoc.data();
+    // If user exists, update mexcUID if provided and different
+    if (mexcUID && data.mexcUID !== mexcUID) {
+      await updateDoc(userRef, { mexcUID });
+    }
     return {
       telegram: data.telegram,
+      mexcUID: data.mexcUID || undefined,
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
       scores: data.scores || {},
@@ -50,6 +57,7 @@ export const createUser = async (telegram: string): Promise<User> => {
 
   const newUser: User = {
     telegram,
+    mexcUID: mexcUID || undefined,
     totalScore: 0,
     playedBooths: {},
     scores: {},
@@ -76,6 +84,7 @@ export const getUser = async (telegram: string): Promise<User | null> => {
   const data = userDoc.data();
   return {
     telegram: data.telegram,
+    mexcUID: data.mexcUID || undefined,
     totalScore: data.totalScore || 0,
     playedBooths: data.playedBooths || {},
     scores: data.scores || {},
@@ -119,6 +128,7 @@ export const getLeaderboard = async (limitCount: number = 10): Promise<User[]> =
     const data = doc.data();
     return {
       telegram: data.telegram,
+      mexcUID: data.mexcUID || undefined,
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
       scores: data.scores || {},
@@ -137,6 +147,7 @@ export const getAllUsers = async (): Promise<User[]> => {
     const data = doc.data();
     return {
       telegram: data.telegram,
+      mexcUID: data.mexcUID || undefined,
       totalScore: data.totalScore || 0,
       playedBooths: data.playedBooths || {},
       scores: data.scores || {},
@@ -158,6 +169,7 @@ export const subscribeToLeaderboard = (
       const data = doc.data();
       return {
         telegram: data.telegram,
+        mexcUID: data.mexcUID || undefined,
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
         scores: data.scores || {},
@@ -180,6 +192,7 @@ export const subscribeToAllUsers = (
       const data = doc.data();
       return {
         telegram: data.telegram,
+        mexcUID: data.mexcUID || undefined,
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
         scores: data.scores || {},
@@ -203,6 +216,7 @@ export const subscribeToUser = (
       const data = docSnapshot.data();
       const user: User = {
         telegram: data.telegram,
+        mexcUID: data.mexcUID || undefined,
         totalScore: data.totalScore || 0,
         playedBooths: data.playedBooths || {},
         scores: data.scores || {},
@@ -414,7 +428,7 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
     const q = query(tokensRef, where('used', '==', false));
     const allTokens = await getDocs(q);
 
-    const expiredTokens: any[] = [];
+    const expiredTokens: QueryDocumentSnapshot<DocumentData>[] = [];
 
     // Filter expired tokens manually
     allTokens.forEach(doc => {
@@ -550,7 +564,7 @@ export const completePendingScore = async (
     const userData = userDoc.data();
     const currentScores = userData.scores || {};
     const newScores = { ...currentScores, [pendingData.boothId]: points };
-    const newTotalScore = Object.values(newScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
+    const newTotalScore = (Object.values(newScores) as number[]).reduce((sum: number, score: number) => sum + (score || 0), 0);
 
     batch.update(userRef, {
       scores: newScores,
@@ -639,7 +653,7 @@ export const updateUserScoreAdmin = async (telegram: string, boothId: string, po
       const userData = userDoc.data();
       const currentScores = userData.scores || {};
       const newScores = { ...currentScores, [boothId]: points };
-      const newTotalScore = Object.values(newScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
+      const newTotalScore = (Object.values(newScores) as number[]).reduce((sum: number, score: number) => sum + (score || 0), 0);
 
       await updateDoc(userRef, {
         scores: newScores,
@@ -667,7 +681,7 @@ export const deleteUserScoreAdmin = async (telegram: string, boothId: string): P
       const newScores = { ...currentScores };
       delete newScores[boothId];
 
-      const newTotalScore = Object.values(newScores).reduce((sum: number, score: any) => sum + (score || 0), 0);
+      const newTotalScore = (Object.values(newScores) as number[]).reduce((sum: number, score: number) => sum + (score || 0), 0);
 
       await updateDoc(userRef, {
         scores: newScores,
@@ -699,7 +713,6 @@ export const allocateScore = async (username: string, boothId: string, minigameI
 
     const userData = userDoc.data();
     const currentScores = userData.scores || {};
-    const currentTotalScore = userData.totalScore || 0;
 
     // Update minigame score
     const newScores = {
@@ -708,7 +721,7 @@ export const allocateScore = async (username: string, boothId: string, minigameI
     };
 
     // Calculate new total score
-    const newTotalScore = Object.values(newScores).reduce((sum: number, s: any) => sum + (s || 0), 0);
+    const newTotalScore = (Object.values(newScores) as number[]).reduce((sum: number, s: number) => sum + (s || 0), 0);
 
     // Update user document
     batch.update(userRef, {
@@ -819,7 +832,7 @@ export const clearAllPendingScores = async (): Promise<void> => {
 
     console.log(`Cleared all ${docs.length} pending scores`);
   } catch (error) {
-    console.error('Error clearing pending scores:', error);
+    console.error('Cleanup error:', error);
     throw error;
   }
 };

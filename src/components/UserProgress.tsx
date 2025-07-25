@@ -26,6 +26,9 @@ const UserProgress: React.FC<UserProgressProps> = ({ user, userRank, totalUsers 
           </div>
           <div>
             <h3 className="text-xl sm:text-2xl font-bold text-white">{user.telegram}</h3>
+            {user.mexcUID && (
+              <p className="text-gray-400 text-sm mt-1">MEXC UID: {user.mexcUID}</p>
+            )}
             <div className="flex items-center space-x-2">
               <p className="text-gray-300 text-base">Tiến trình cá nhân</p>
               {userRank && totalUsers && (
