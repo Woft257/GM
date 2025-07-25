@@ -310,9 +310,12 @@ const HomePage: React.FC = () => {
                   <h1 className="text-2xl font-bold text-white mb-2">
                     Tham gia MEXC Minigame
                   </h1>
-                  <p className="text-gray-400 text-sm mb-6">
-                    Quét QR code tại các booth để nhận điểm và tham gia bảng xếp hạng
-                  </p>
+                    <p className="text-gray-400 text-sm mb-2">
+                      Nhập Username Telegram và MEXC UID để tham gia vào minigame.
+                    </p>
+                    <p className="text-gray-400 text-sm mb-6">
+                      Quét QR code tại các booth để nhận điểm và tham gia bảng xếp hạng.
+                    </p>
                 </div>
 
                 <div className="w-full">
