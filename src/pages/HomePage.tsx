@@ -467,7 +467,7 @@ const HomePage: React.FC = () => {
                 <div>
                   <p className="text-yellow-300 text-sm font-semibold mb-1">Lưu ý quan trọng:</p>
                   <p className="text-yellow-200 text-xs sm:text-sm">
-                    Mỗi người chơi chỉ được đổi <strong>1 phần quà duy nhất</strong> tại Booth Souvenir.
+                    Mỗi người chơi chỉ được đổi <strong>1 phần quà duy nhất</strong> tại các Booth.
                     Hãy cân nhắc kỹ trước khi chọn phần thưởng!
                   </p>
                 </div>
@@ -481,9 +481,9 @@ const HomePage: React.FC = () => {
                 const hasAnyReward = user.rewards && Object.values(user.rewards).some(claimed => claimed);
 
                 const rewards = [
-                  { name: 'Phần thưởng Đồng', icon: '🥉', color: 'from-amber-600 to-yellow-500', shadow: 'shadow-amber-500/20', minGames: 1, maxGames: 2 },
-                  { name: 'Phần thưởng Bạc', icon: '🥈', color: 'from-gray-400 to-gray-300', shadow: 'shadow-gray-400/20', minGames: 3, maxGames: 4 },
-                  { name: 'Phần thưởng Vàng', icon: '🥇', color: 'from-yellow-400 to-amber-300', shadow: 'shadow-yellow-400/20', minGames: 5, maxGames: 6 }
+                  { name: 'Phần thưởng Đồng', icon: '🥉', color: 'from-amber-600 to-yellow-500', shadow: 'shadow-amber-500/20', minGames: 1, maxGames: 2, description: 'Keychain' },
+                  { name: 'Phần thưởng Bạc', icon: '🥈', color: 'from-gray-400 to-gray-300', shadow: 'shadow-gray-400/20', minGames: 3, maxGames: 4, description: 'Quạt cầm tay + Voucher Be' },
+                  { name: 'Phần thưởng Vàng', icon: '🥇', color: 'from-yellow-400 to-amber-300', shadow: 'shadow-yellow-400/20', minGames: 5, maxGames: 6, description: 'Áo thun + Voucher Be' }
                 ];
 
                 return rewards.map((reward, index) => {
@@ -519,6 +519,10 @@ const HomePage: React.FC = () => {
                                 {reward.minGames === reward.maxGames
                                   ? `${reward.minGames} minigame`
                                   : `${reward.minGames}+ minigames`}
+                              </p>
+                              {/* Reward description */}
+                              <p className="text-gray-300 text-xs sm:text-sm mt-1">
+                                {reward.description}
                               </p>
                             </div>
                           </div>
@@ -559,6 +563,24 @@ const HomePage: React.FC = () => {
               })()}
             </div>
 
+          </div>
+        )}
+
+        {/* Thể lệ Section */}
+        {user && (
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 rounded-lg sm:rounded-xl p-3 sm:p-6 backdrop-blur-sm">
+            <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-3 sm:mb-6">
+              <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
+                <Trophy className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-white">Thể lệ</h3>
+            </div>
+            <ul className="list-disc list-inside text-gray-300 space-y-2 text-sm sm:text-base">
+              <li><b>Top 5 điểm cao nhất mỗi ngày:</b> Keychain + Áo thun + Quạt cầm tay + Balo</li>
+              <li><b>Top 10 may mắn hoàn thành 6 thử thách mỗi ngày:</b> Keychain + Áo thun + Quạt cầm tay</li>
+              <li><b>Đổi quà bậc cao xuống thấp:</b> Nếu quà bậc cao hết, có thể nhận quà bậc thấp hơn không đổi ngược lại</li>
+              <li><b>Công bố & Nhận thưởng:</b> Kết quả Top công bố trước 15:00 mỗi ngày. Người chơi phải có mặt để nhận thưởng tại booth Souvenir để nhận thưởng</li>
+            </ul>
           </div>
         )}
 
