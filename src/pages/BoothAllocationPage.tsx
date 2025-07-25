@@ -7,12 +7,12 @@ import { physicalBooths, getMinigamesForBooth } from '../data/booths';
 
 const BoothAllocationPage: React.FC = () => {
   const { boothId } = useParams<{ boothId: string }>();
-  const navigate = useNavigate();
   const { pendingScores, loading } = usePendingScores();
+  const navigate = useNavigate(); // Keep navigate if it's used elsewhere or might be used in the future
   const [allocatingUser, setAllocatingUser] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
-  const [userScores, setUserScores] = useState<Record<string, Record<string, number>>>({});
+  const [userDetails, setUserDetails] = useState<Record<string, { scores: Record<string, number>, mexcUID?: string }>>({});
 
   const booth = physicalBooths.find(b => b.id === boothId);
   const boothMinigames = boothId ? getMinigamesForBooth(boothId) : [];
@@ -28,10 +28,10 @@ const BoothAllocationPage: React.FC = () => {
     }
   }, [booth]);
 
-  // Load user scores for pending users
+  // Load user scores and MEXC UID for pending users
   useEffect(() => {
-    const loadUserScores = async () => {
-      const scores: Record<string, Record<string, number>> = {};
+    const loadUserDetails = async () => {
+      const details: Record<string, { scores: Record<string, number>, mexcUID?: string }> = {};
 
       // Use Promise.all for better performance
       const userPromises = boothPendingScores
@@ -39,22 +39,25 @@ const BoothAllocationPage: React.FC = () => {
         .map(async (pendingScore) => {
           try {
             const user = await getUser(pendingScore.username);
-            if (user && user.scores) {
-              scores[pendingScore.username] = user.scores;
+            if (user) {
+              details[pendingScore.username] = {
+                scores: user.scores || {},
+                mexcUID: user.mexcUID
+              };
             }
           } catch (error) {
-            console.error(`Error loading scores for ${pendingScore.username}:`, error);
+            console.error(`Error loading details for ${pendingScore.username}:`, error);
           }
         });
 
       await Promise.all(userPromises);
-      setUserScores(scores);
+      setUserDetails(details);
     };
 
     if (boothPendingScores.length > 0) {
-      loadUserScores();
+      loadUserDetails();
     } else {
-      setUserScores({});
+      setUserDetails({});
     }
   }, [boothPendingScores]);
 
@@ -112,8 +115,9 @@ const BoothAllocationPage: React.FC = () => {
           [minigameId]: 0
         }
       }));
-    } catch (error: any) {
-      setNotification({ type: 'error', message: error.message || 'Có lỗi xảy ra' });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+      setNotification({ type: 'error', message: errorMessage });
       setTimeout(() => setNotification(null), 3000);
     } finally {
       setAllocatingUser(null);
@@ -202,6 +206,9 @@ const BoothAllocationPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-white">{pendingScore.username}</h3>
+                    {userDetails[pendingScore.username]?.mexcUID && (
+                      <p className="text-gray-400 text-sm mt-1">MEXC UID: {userDetails[pendingScore.username].mexcUID}</p>
+                    )}
                     <p className="text-gray-400 text-sm">
                       Quét lúc: {new Date(pendingScore.timestamp).toLocaleString('vi-VN')}
                     </p>
@@ -213,7 +220,7 @@ const BoothAllocationPage: React.FC = () => {
 
                 <div className="space-y-4">
                   {(() => {
-                    const currentUserScores = userScores[pendingScore.username] || {};
+                    const currentUserScores = userDetails[pendingScore.username]?.scores || {};
                     const availableMinigames = boothMinigames.filter(minigame =>
                       !currentUserScores[minigame.id] || currentUserScores[minigame.id] === 0
                     );
@@ -228,9 +235,9 @@ const BoothAllocationPage: React.FC = () => {
                             <p className="text-green-300 text-sm font-semibold mb-2">Đã hoàn thành:</p>
                             <div className="space-y-1">
                               {completedMinigames.map((minigame, idx) => (
-                                <div key={minigame?.id || `completed-${idx}`} className="flex justify-between text-sm">
-                                  <span className="text-gray-300">{minigame?.name}</span>
-                                  <span className="text-green-400 font-semibold">{currentUserScores[minigame?.id || ''] || 0} điểm</span>
+                                <div key={minigame.id} className="flex justify-between text-sm">
+                                  <span className="text-gray-300">{minigame.name}</span>
+                                  <span className="text-green-400 font-semibold">{currentUserScores[minigame.id] || 0} điểm</span>
                                 </div>
                               ))}
                             </div>
@@ -241,12 +248,12 @@ const BoothAllocationPage: React.FC = () => {
                           <>
                             <p className="text-gray-300 text-sm">Chọn minigame và nhập điểm:</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              {availableMinigames.map((minigame, idx) => (
-                                <div key={minigame?.id || `available-${idx}`} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                  <h4 className="font-semibold text-white mb-2 text-center">{minigame?.name}</h4>
-                                  {minigame?.maxScore !== 999999 && (
+                              {availableMinigames.map((minigame) => (
+                                <div key={minigame.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                                  <h4 className="font-semibold text-white mb-2 text-center">{minigame.name}</h4>
+                                  {minigame.maxScore !== 999999 && (
                                     <p className="text-gray-400 text-xs text-center mb-3">
-                                      Tối đa: {minigame?.maxScore} điểm
+                                      Tối đa: {minigame.maxScore} điểm
                                     </p>
                                   )}
                                   <div className="space-y-3">
@@ -254,18 +261,18 @@ const BoothAllocationPage: React.FC = () => {
                                       <input
                                         type="number"
                                         min="0"
-                                        max={minigame?.maxScore === 999999 ? undefined : minigame?.maxScore}
-                                        value={scores[pendingScore.username]?.[minigame?.id || ''] || ''}
-                                        onChange={(e) => handleScoreChange(pendingScore.username, minigame?.id || '', e.target.value)}
-                                        placeholder={minigame?.maxScore === 999999 ? 'Nhập điểm' : `Nhập điểm (0-${minigame?.maxScore})`}
+                                        max={minigame.maxScore === 999999 ? undefined : minigame.maxScore}
+                                        value={scores[pendingScore.username]?.[minigame.id] || ''}
+                                        onChange={(e) => handleScoreChange(pendingScore.username, minigame.id, e.target.value)}
+                                        placeholder={minigame.maxScore === 999999 ? 'Nhập điểm' : `Nhập điểm (0-${minigame.maxScore})`}
                                         className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         disabled={allocatingUser === pendingScore.username}
                                       />
                                       <span className="text-gray-400 text-sm">điểm</span>
                                     </div>
                                     <button
-                                      onClick={() => handleAllocateScore(pendingScore.username, minigame?.id || '')}
-                                      disabled={allocatingUser === pendingScore.username || !scores[pendingScore.username]?.[minigame?.id || '']}
+                                      onClick={() => handleAllocateScore(pendingScore.username, minigame.id)}
+                                      disabled={allocatingUser === pendingScore.username || !scores[pendingScore.username]?.[minigame.id]}
                                       className="w-full bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 disabled:from-gray-600 disabled:to-gray-700 text-white py-2 px-4 rounded-lg font-semibold transition-all duration-200 disabled:cursor-not-allowed"
                                     >
                                       {allocatingUser === pendingScore.username ? 'Đang phân bổ...' : 'Phân bổ điểm'}

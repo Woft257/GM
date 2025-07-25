@@ -19,7 +19,7 @@ import { useGameStatus } from '../hooks/useGameStatus';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { username, login, isLoading: authLoading } = useAuth();
+  const { username, mexcUID, login, isLoading: authLoading } = useAuth();
   const { users, loading: usersLoading } = useUsers();
   const { user, loading: userLoading } = useUser(username || '');
   const { pendingScores } = usePendingScores(username);
@@ -316,10 +316,10 @@ const HomePage: React.FC = () => {
                 </div>
 
                 <div className="w-full">
-                  <LoginForm onLogin={async (username) => {
+                  <LoginForm onLogin={async (username, mexcUID) => {
                     try {
                       setLoginError('');
-                      await login(username);
+                      await login(username, mexcUID);
                     } catch (error: unknown) {
                       const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi đăng nhập';
                       setLoginError(errorMessage);

@@ -236,6 +236,9 @@ const ScoreManagement: React.FC = () => {
                 </button>
                 <div className="text-right">
                   <h2 className="text-sm sm:text-base font-bold text-white truncate max-w-32 sm:max-w-none">{selectedUser}</h2>
+                  {currentUser?.mexcUID && (
+                    <p className="text-xs sm:text-sm text-white/70 mt-1">MEXC UID: {currentUser.mexcUID}</p>
+                  )}
                   <p className="text-xs sm:text-sm text-white/70">
                     Tổng: <span className="font-semibold text-yellow-400">{totalScore}</span>
                   </p>
@@ -376,6 +379,9 @@ const ScoreManagement: React.FC = () => {
                         <span className="text-xs text-white/50 font-mono">#{index + 1}</span>
                         <p className="font-medium text-white text-sm sm:text-base truncate">{user.telegram}</p>
                       </div>
+                      {user.mexcUID && (
+                        <p className="text-xs sm:text-sm text-white/70 mt-1">MEXC UID: {user.mexcUID}</p>
+                      )}
                       <p className="text-xs sm:text-sm text-white/70">
                         Tổng điểm: <span className="font-semibold text-yellow-400">{user.totalScore}</span>
                         {user.scores && Object.keys(user.scores).filter(key => user.scores![key] > 0).length > 0 && (
