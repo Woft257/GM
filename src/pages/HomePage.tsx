@@ -266,7 +266,8 @@ const HomePage: React.FC = () => {
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                   : 'bg-green-500/20 text-green-400 border border-green-500/30'
               }`}>
-                {gameEnded ? '🔴 Đã kết thúc' : '🟢 Đang diễn ra'}
+                <span className="hidden sm:inline">{gameEnded ? '🔴 Đã kết thúc' : '🟢 Đang diễn ra'}</span>
+                <span className="sm:hidden text-xs">{gameEnded ? '🔴' : '🟢'}</span>
               </div>
             </div>
           </div>
