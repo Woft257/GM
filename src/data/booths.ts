@@ -44,19 +44,19 @@ export const booths: Booth[] = [
 export const physicalBooths = [
   {
     id: 'booth1',
-    name: 'Booth 1',
+    name: 'Souvenir',
     description: 'Treasure Hunt & Bắt sóng token',
     minigames: ['minigame1', 'minigame2']
   },
   {
     id: 'booth2',
-    name: 'Booth 2',
+    name: 'DEX',
     description: 'vượt chứng ngại phí & Săn thưởng đa chuỗi',
     minigames: ['minigame3', 'minigame4']
   },
   {
     id: 'booth3',
-    name: 'Booth 3',
+    name: 'CEX',
     description: 'Rổ vàng ẩn số & Vùng an toàn',
     minigames: ['minigame5', 'minigame6']
   }
