@@ -51,7 +51,7 @@ export const physicalBooths = [
   {
     id: 'booth2',
     name: 'DEX',
-    description: 'vượt chứng ngại phí & Săn thưởng đa chuỗi',
+    description: 'Vượt chứng ngại phí & Săn thưởng đa chuỗi',
     minigames: ['minigame3', 'minigame4']
   },
   {
