@@ -56,6 +56,8 @@ function App() {
         <Route path="/admin/scores" element={<AdminAuth><ScoreManagement /></AdminAuth>} />
         <Route path="/admin/:boothId" element={<AdminAuth><BoothAllocationPage /></AdminAuth>} />
         <Route path="/results" element={<ResultsPage />} />
+        {/* New route for booth QR links */}
+        <Route path="/booth/:boothId" element={<HomePage />} />
 
         {/* Legacy routes - redirect to new admin routes */}
         <Route path="/booth-qr" element={<AdminAuth><BoothQRPage /></AdminAuth>} />

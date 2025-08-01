@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import LoginForm from '../components/LoginForm';
 import Leaderboard from '../components/Leaderboard';
@@ -19,7 +19,8 @@ import { useGameStatus } from '../hooks/useGameStatus';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { username, mexcUID, login, isLoading: authLoading } = useAuth();
+  const { boothId } = useParams<{ boothId: string }>(); // Add useParams to get boothId from URL
+  const { username, login, isLoading: authLoading } = useAuth();
   const { users, loading: usersLoading } = useUsers();
   const { user, loading: userLoading } = useUser(username || '');
   const { pendingScores } = usePendingScores(username);
@@ -42,6 +43,24 @@ const HomePage: React.FC = () => {
 
   // Listen for game reset events
   useEffect(() => {
+    // If boothId is present in the URL, attempt to log in and then process the QR
+    if (boothId && !username && !authLoading) {
+      // Check if user data exists in local storage
+      const storedUsername = localStorage.getItem('username');
+      const storedMexcUID = localStorage.getItem('mexcUID'); // Assuming mexcUID is also stored
+
+      if (storedUsername) {
+        // Attempt silent login with stored credentials
+        login(storedUsername, storedMexcUID || '').then(() => {
+          // After successful login, process the booth QR
+          handleQRScan(`/booth/${boothId}`); // Simulate scanning the booth QR
+        }).catch(error => {
+          console.error('Auto-login failed:', error);
+          // If auto-login fails, user will see the login form
+        });
+      }
+    }
+
     const handleReset = () => {
       console.log('Game reset detected. Clearing session and reloading.');
       
@@ -49,6 +68,7 @@ const HomePage: React.FC = () => {
       localStorage.removeItem('username');
       localStorage.removeItem('telegram_username');
       localStorage.removeItem('user_login_timestamp');
+      localStorage.removeItem('mexcUID'); // Clear mexcUID as well
       
       // A full clear is more robust
       localStorage.clear();
@@ -140,6 +160,51 @@ const HomePage: React.FC = () => {
     }
 
     try {
+      // Handle booth links directly from URL
+      if (qrText.startsWith('/booth/')) {
+        const urlBoothId = qrText.replace('/booth/', '');
+        const boothQRData = { boothId: urlBoothId }; // Create a mock boothQRData
+
+        if (validateBoothQRData(boothQRData)) {
+          // Check if user has already completed all minigames for this booth
+          const boothMinigames = getMinigamesForBooth(boothQRData.boothId);
+          const userScores = user?.scores || {};
+
+          const completedMinigames = boothMinigames.filter(minigame =>
+            minigame && userScores[minigame.id] !== undefined && userScores[minigame.id] > 0
+          );
+
+          if (completedMinigames.length === boothMinigames.length) {
+            setScanResult({
+              success: false,
+              message: `Bạn đã hoàn thành tất cả minigame của ${boothQRData.boothId}. Không thể quét lại!`
+            });
+            return;
+          }
+
+          // Check if user already has pending score for this booth
+          try {
+            // Create pending score entry
+            await createPendingScore(boothQRData.boothId, username);
+
+            // Show success message and stay on home page
+            setScanResult({
+              success: true,
+              message: `Đã quét thành công ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
+              isPending: true,
+              boothId: boothQRData.boothId
+            });
+          } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm';
+            setScanResult({
+              success: false,
+              message: errorMessage
+            });
+          }
+          return;
+        }
+      }
+
       // Check if it's a simple code (old system)
       if (qrText.startsWith('SIMPLE_CODE:')) {
         const simpleCode = qrText.replace('SIMPLE_CODE:', '');
