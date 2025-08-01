@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoginForm from '../components/LoginForm';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -7,22 +7,20 @@ import MexcBackground from '../components/MexcBackground';
 const LoginPage: React.FC = () => {
   const { username, isLoading, login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // Get location object
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const location = useLocation();
+  const [loginError, setLoginError] = useState<string>('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && username) {
-      // If already logged in, redirect to the 'from' path or home
       const from = location.state?.from || '/';
       navigate(from, { replace: true });
     }
-  }, [username, isLoading, navigate, location.state]); // Add location.state to dependencies
+  }, [username, isLoading, navigate, location.state]);
 
   const handleLogin = async (telegramUsername: string, mexcUID: string) => {
-    setLoginError(null);
+    setLoginError('');
     try {
       await login(telegramUsername, mexcUID);
-      // After successful login, the useEffect will handle navigation
     } catch (error: unknown) {
       console.error('Login failed:', error);
       if (error instanceof Error) {
@@ -45,15 +43,33 @@ const LoginPage: React.FC = () => {
 
   return (
     <MexcBackground>
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md bg-gray-900/70 backdrop-blur-sm rounded-xl p-8 shadow-2xl border border-gray-700/50">
-          <h2 className="text-3xl font-bold text-white text-center mb-6">Đăng nhập</h2>
-          {loginError && (
-            <div className="bg-red-500/20 text-red-300 p-3 rounded-lg mb-4 text-sm text-center">
-              {loginError}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="px-4 py-8">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-white text-xl font-bold">🎯</span>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">
+                Tham gia MEXC Minigame
+              </h1>
+              <p className="text-gray-400 text-sm mb-2">
+                Nhập Username Telegram và MEXC UID để tham gia vào minigame.
+              </p>
+              <p className="text-gray-400 text-sm mb-6">
+                Quét QR code tại các booth để nhận điểm và tham gia bảng xếp hạng.
+              </p>
             </div>
-          )}
-          <LoginForm onLogin={handleLogin} />
+
+            <div className="w-full">
+              <LoginForm onLogin={handleLogin} />
+              {loginError && (
+                <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                  <p className="text-red-300 text-sm text-center">{loginError}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </MexcBackground>
