@@ -15,7 +15,8 @@ import {
   writeBatch,
   deleteField,
   QueryDocumentSnapshot,
-  DocumentData
+  DocumentData,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, PendingScore } from '../types';
@@ -804,6 +805,17 @@ export const subscribeToGlobalReload = (callback: (timestamp: Date | null) => vo
 };
 
 // Function to clear all pending scores (for reset)
+export const deletePendingScore = async (pendingScoreId: string): Promise<void> => {
+  try {
+    const pendingRef = doc(db, PENDING_SCORES_COLLECTION, pendingScoreId);
+    await deleteDoc(pendingRef);
+    console.log(`Pending score ${pendingScoreId} deleted successfully.`);
+  } catch (error) {
+    console.error(`Error deleting pending score ${pendingScoreId}:`, error);
+    throw error;
+  }
+};
+
 export const clearAllPendingScores = async (): Promise<void> => {
   try {
     console.log('Clearing all pending scores...');

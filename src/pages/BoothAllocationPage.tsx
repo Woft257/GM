@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowLeft, Users, Trophy, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
 import { usePendingScores } from '../hooks/usePendingScores';
-import { allocateScore, getUser } from '../lib/database';
+import { allocateScore, getUser, deletePendingScore } from '../lib/database';
 import { physicalBooths, getMinigamesForBooth } from '../data/booths';
 import { Booth as Minigame } from '../types'; // Import Booth type and alias it as Minigame
 
@@ -36,6 +36,22 @@ const BoothAllocationPage: React.FC = () => {
 
   const navigateToAdmin = () => {
     window.location.href = '/admin';
+  };
+
+  const handleDeletePendingScore = async (pendingScoreId: string, username: string) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa lượt quét của ${username} khỏi danh sách chờ?`)) {
+      return;
+    }
+    try {
+      await deletePendingScore(pendingScoreId);
+      setNotification({ type: 'success', message: `Đã xóa lượt quét của ${username}.` });
+      setTimeout(() => setNotification(null), 3000);
+      // The usePendingScores hook should re-fetch and update the list automatically
+    } catch (error) {
+      console.error('Error deleting pending score:', error);
+      setNotification({ type: 'error', message: 'Lỗi khi xóa lượt quét.' });
+      setTimeout(() => setNotification(null), 3000);
+    }
   };
 
   useEffect(() => {
@@ -236,8 +252,15 @@ const BoothAllocationPage: React.FC = () => {
                       Quét lúc: {new Date(pendingScore.timestamp).toLocaleString('vi-VN')}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center space-x-2">
                     <p className="text-yellow-400 font-semibold">Chờ phân bổ điểm</p>
+                    <button
+                      onClick={() => handleDeletePendingScore(pendingScore.id, pendingScore.username)}
+                      className="p-2 rounded-full text-red-400 hover:bg-red-500/20 transition-colors"
+                      title="Xóa lượt quét này"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   </div>
                 </div>
 
