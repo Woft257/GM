@@ -1,25 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Trophy, Users, Star, Crown, Medal, Award, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../hooks/useAuth';
 import { useGameStatus } from '../hooks/useGameStatus';
+import { booths } from '../data/booths'; // Import booths to get total minigames
+import { User } from '../types'; // Import User interface
 
 const ResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const { users, loading: usersLoading } = useUsers();
   const { username } = useAuth();
   const { gameStatus, loading } = useGameStatus();
+  const [luckyUsers, setLuckyUsers] = useState<User[]>([]); // State for lucky users
 
   // Game ended state derived from gameStatus
   const gameEnded = gameStatus === 'ended';
 
   // Sort users by score for final ranking
-  const sortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => b.totalScore - a.totalScore);
+  }, [users]);
+
   const currentUser = sortedUsers.find(u => u.telegram === username);
   const currentUserRank = currentUser ? sortedUsers.findIndex(u => u.telegram === username) + 1 : null;
   const winners = sortedUsers.slice(0, 10); // Top 10
+
+  useEffect(() => {
+    if (gameEnded && users.length > 0) {
+      const totalMinigames = booths.length;
+      const eligibleUsers = users.filter(user =>
+        Object.keys(user.scores || {}).filter(key => user.scores![key] > 0).length === totalMinigames
+      );
+
+      // Recalculate sortedUsers locally for this effect to avoid dependency issues
+      const currentSortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
+      // Exclude top 5 winners from lucky draw
+      const top5WinnersTelegram = currentSortedUsers.slice(0, 5).map(user => user.telegram);
+      const finalEligibleUsers = eligibleUsers.filter(user => !top5WinnersTelegram.includes(user.telegram));
+
+      // Shuffle and select top 10 lucky users
+      const shuffledUsers = finalEligibleUsers.sort(() => 0.5 - Math.random());
+      setLuckyUsers(shuffledUsers.slice(0, 10));
+    }
+  }, [gameEnded, users]); // Removed sortedUsers from dependencies
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -27,15 +51,6 @@ const ResultsPage: React.FC = () => {
       case 2: return <Medal className="h-6 w-6 text-gray-400" />;
       case 3: return <Award className="h-6 w-6 text-amber-600" />;
       default: return null;
-    }
-  };
-
-  const getRankBg = (rank: number) => {
-    switch (rank) {
-      case 1: return 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-500/30';
-      case 2: return 'bg-gradient-to-r from-gray-400/20 to-slate-400/20 border-gray-400/30';
-      case 3: return 'bg-gradient-to-r from-amber-600/20 to-orange-500/20 border-amber-600/30';
-      default: return 'bg-white/5 border-white/10';
     }
   };
 
@@ -239,6 +254,48 @@ const ResultsPage: React.FC = () => {
                   )}
                   <p className="text-white font-semibold mb-2 sm:mb-3 text-xs sm:text-sm truncate">{user.telegram}</p>
                   <div className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-1">
+                    {user.totalScore}
+                  </div>
+                  <p className="text-gray-400 text-xs">điểm</p>
+                  {user.telegram === username && (
+                    <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
+                      <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-semibold">
+                        Bạn
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top 10 Lucky Winners */}
+        {gameEnded && luckyUsers.length > 0 && (
+          <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 sm:p-6">
+            <div className="text-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">🍀 Top 10 may mắn</h2>
+              <p className="text-gray-300 text-sm sm:text-base">Những người chơi hoàn thành tất cả minigame được chọn ngẫu nhiên</p>
+            </div>
+
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+              {luckyUsers.map((user, index) => (
+                <div
+                  key={user.telegram}
+                  className={`relative p-3 sm:p-4 rounded-2xl border text-center transition-all duration-200 hover:scale-105 ${
+                    user.telegram === username ? 'ring-2 ring-cyan-400' : 'bg-gray-800/50 border-gray-700/50'
+                  }`}
+                >
+                  <div className="flex justify-center mb-2 sm:mb-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500/50 rounded-full flex items-center justify-center">
+                      <Star className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm sm:text-lg font-bold text-white mb-1 sm:mb-2">
+                    #{index + 1}
+                  </h3>
+                  <p className="text-white font-semibold mb-2 sm:mb-3 text-xs sm:text-sm truncate">{user.telegram}</p>
+                  <div className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-lime-400 bg-clip-text text-transparent mb-1">
                     {user.totalScore}
                   </div>
                   <p className="text-gray-400 text-xs">điểm</p>
