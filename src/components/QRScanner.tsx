@@ -114,17 +114,28 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       let finalCameraId = cameraIdToUse;
 
       if (!finalCameraId) {
-        // If no specific camera is selected, try to find a back camera or use the first one
-        const backCamera = devices.find(device =>
-          device.label.toLowerCase().includes('back') ||
-          device.label.toLowerCase().includes('rear') ||
+        // Attempt to get the camera with 'environment' facing mode first (most reliable for back camera)
+        const environmentCamera = devices.find(device =>
           device.label.toLowerCase().includes('environment')
         );
-        if (backCamera) {
-          finalCameraId = backCamera.id;
-          console.log('Using back camera:', backCamera.label);
+
+        if (environmentCamera) {
+          finalCameraId = environmentCamera.id;
+          console.log('Prioritizing environment camera:', environmentCamera.label);
         } else {
-          finalCameraId = devices[0]?.id; // Fallback to first camera
+          // Fallback to finding a back/rear camera by label
+          const backCamera = devices.find(device =>
+            device.label.toLowerCase().includes('back') ||
+            device.label.toLowerCase().includes('rear')
+          );
+          if (backCamera) {
+            finalCameraId = backCamera.id;
+            console.log('Prioritizing back/rear camera by label:', backCamera.label);
+          } else if (devices.length > 0) {
+            // Fallback to the first available camera if no specific back camera is found
+            finalCameraId = devices[0].id;
+            console.log('No specific back camera found, using first available camera:', devices[0].label);
+          }
         }
       }
 
