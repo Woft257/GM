@@ -20,7 +20,9 @@ const BoothAllocationPage: React.FC = () => {
   
   // Memoize boothPendingScores to prevent unnecessary re-renders
   const boothPendingScores = React.useMemo(() => {
-    return pendingScores.filter(ps => ps.boothId === boothId);
+    return pendingScores
+      .filter(ps => ps.boothId === boothId)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }, [pendingScores, boothId]);
 
   // Filter pending scores to only show those who still need points
