@@ -10,9 +10,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useUsers, useUser } from '../hooks/useUsers';
 import { parseQRData, validateQRData } from '../lib/qrcode';
 import { processQRToken, processQRTokenBySimpleCode, createPendingScore } from '../lib/database';
-import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
+// Removed parseBoothQRData, validateBoothQRData as QR now directly links to /booth/:boothId
 import { usePendingScores } from '../hooks/usePendingScores';
-import { getBoothName, getMinigamesForBooth } from '../data/booths';
+import { getBoothName, getMinigamesForBooth, physicalBooths } from '../data/booths'; // Import physicalBooths
 import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye, Gift } from 'lucide-react';
 import { isQRScanningAllowed } from '../lib/gameControl';
 import { useGameStatus } from '../hooks/useGameStatus';
@@ -160,49 +160,69 @@ const HomePage: React.FC = () => {
     }
 
     try {
-      // Handle booth links directly from URL
-      if (qrText.startsWith('/booth/')) {
-        const urlBoothId = qrText.replace('/booth/', '');
-        const boothQRData = { boothId: urlBoothId }; // Create a mock boothQRData
+      let processedBoothId: string | null = null;
 
-        if (validateBoothQRData(boothQRData)) {
-          // Check if user has already completed all minigames for this booth
-          const boothMinigames = getMinigamesForBooth(boothQRData.boothId);
-          const userScores = user?.scores || {};
+      // Attempt to parse as a full URL first
+      try {
+        const url = new URL(qrText);
+        const pathSegments = url.pathname.split('/').filter(segment => segment !== '');
+        if (pathSegments.length >= 2 && pathSegments[0] === 'booth') {
+          processedBoothId = pathSegments[1];
+        }
+      } catch (e) {
+        // Not a valid URL, try as relative path
+        if (qrText.startsWith('/booth/')) {
+          processedBoothId = qrText.replace('/booth/', '');
+        }
+      }
 
-          const completedMinigames = boothMinigames.filter(minigame =>
-            minigame && userScores[minigame.id] !== undefined && userScores[minigame.id] > 0
-          );
-
-          if (completedMinigames.length === boothMinigames.length) {
-            setScanResult({
-              success: false,
-              message: `Bạn đã hoàn thành tất cả minigame của ${boothQRData.boothId}. Không thể quét lại!`
-            });
-            return;
-          }
-
-          // Check if user already has pending score for this booth
-          try {
-            // Create pending score entry
-            await createPendingScore(boothQRData.boothId, username);
-
-            // Show success message and stay on home page
-            setScanResult({
-              success: true,
-              message: `Đã quét thành công ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
-              isPending: true,
-              boothId: boothQRData.boothId
-            });
-          } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm';
-            setScanResult({
-              success: false,
-              message: errorMessage
-            });
-          }
+      if (processedBoothId) {
+        // Validate boothId against existing physical booths
+        const isValidBooth = physicalBooths.some((booth: { id: string; }) => booth.id === processedBoothId);
+        if (!isValidBooth) {
+          setScanResult({
+            success: false,
+            message: `QR code không hợp lệ: Booth ID '${processedBoothId}' không tồn tại.`
+          });
           return;
         }
+
+        // Check if user has already completed all minigames for this booth
+        const boothMinigames = getMinigamesForBooth(processedBoothId);
+        const userScores = user?.scores || {};
+
+        const completedMinigames = boothMinigames.filter(minigame =>
+          minigame && userScores[minigame.id] !== undefined && userScores[minigame.id] > 0
+        );
+
+        if (completedMinigames.length === boothMinigames.length && boothMinigames.length > 0) {
+          setScanResult({
+            success: false,
+            message: `Bạn đã hoàn thành tất cả minigame của ${processedBoothId}. Không thể quét lại!`
+          });
+          return;
+        }
+
+        // Check if user already has pending score for this booth
+        try {
+          // Create pending score entry
+          await createPendingScore(processedBoothId, username);
+
+          // Show success message and stay on home page
+          setScanResult({
+            success: true,
+            message: `Đã quét thành công ${processedBoothId}! Đang chờ admin phân bổ điểm...`,
+            isPending: true,
+            boothId: processedBoothId
+          });
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm';
+          setScanResult({
+            success: false,
+            message: errorMessage
+          });
+        }
+        return;
       }
 
       // Check if it's a simple code (old system)
@@ -220,47 +240,8 @@ const HomePage: React.FC = () => {
         return;
       }
 
-      // Try to parse as booth QR (new system)
-      const boothQRData = parseBoothQRData(qrText);
-
-      if (boothQRData && validateBoothQRData(boothQRData)) {
-        // Check if user has already completed all minigames for this booth
-        const boothMinigames = getMinigamesForBooth(boothQRData.boothId);
-        const userScores = user?.scores || {};
-
-        const completedMinigames = boothMinigames.filter(minigame =>
-          minigame && userScores[minigame.id] !== undefined && userScores[minigame.id] > 0
-        );
-
-        if (completedMinigames.length === boothMinigames.length) {
-          setScanResult({
-            success: false,
-            message: `Bạn đã hoàn thành tất cả minigame của ${boothQRData.boothId}. Không thể quét lại!`
-          });
-          return;
-        }
-
-        // Check if user already has pending score for this booth
-        try {
-          // Create pending score entry
-          await createPendingScore(boothQRData.boothId, username);
-
-          // Show success message and stay on home page
-          setScanResult({
-            success: true,
-            message: `Đã quét thành công ${boothQRData.boothId}! Đang chờ admin phân bổ điểm...`,
-            isPending: true,
-            boothId: boothQRData.boothId
-          });
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo yêu cầu phân bổ điểm';
-          setScanResult({
-            success: false,
-            message: errorMessage
-          });
-        }
-        return;
-      }
+      // The new QR format (full URL or relative path) is handled by the logic above.
+      // The old parseBoothQRData and validateBoothQRData are no longer needed.
 
       // Try to parse as old QR token system
       const qrData = parseQRData(qrText);

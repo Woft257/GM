@@ -10,6 +10,8 @@ import ScoreManagement from './pages/ScoreManagement';
 import RewardManagement from './pages/RewardManagement';
 import RewardDetails from './pages/RewardDetails';
 import AdminAuth from './components/AdminAuth';
+import LoginPage from './pages/LoginPage'; // Import LoginPage
+import BoothHandlerPage from './pages/BoothHandlerPage'; // Import BoothHandlerPage
 import { subscribeToGlobalReload } from './lib/database';
 
 const LAST_RELOAD_TRIGGER_KEY = 'last_global_reload_trigger';
@@ -56,8 +58,9 @@ function App() {
         <Route path="/admin/scores" element={<AdminAuth><ScoreManagement /></AdminAuth>} />
         <Route path="/admin/:boothId" element={<AdminAuth><BoothAllocationPage /></AdminAuth>} />
         <Route path="/results" element={<ResultsPage />} />
-        {/* New route for booth QR links */}
-        <Route path="/booth/:boothId" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} /> {/* Add login route */}
+        {/* New route for booth QR links, handled by BoothHandlerPage */}
+        <Route path="/booth/:boothId" element={<BoothHandlerPage />} />
 
         {/* Legacy routes - redirect to new admin routes */}
         <Route path="/booth-qr" element={<AdminAuth><BoothQRPage /></AdminAuth>} />

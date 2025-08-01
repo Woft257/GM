@@ -81,3 +81,17 @@ export const getBoothName = (id: string): string => {
   const booth = getBoothById(id);
   return booth ? booth.name : id;
 };
+
+export const getBoothTotalPoints = (boothId: string): number | undefined => {
+  const booth = physicalBooths.find(b => b.id === boothId);
+  if (!booth) return undefined;
+
+  let totalPoints = 0;
+  booth.minigames.forEach(minigameId => {
+    const minigame = booths.find(m => m.id === minigameId);
+    if (minigame && minigame.maxScore !== undefined) {
+      totalPoints += minigame.maxScore;
+    }
+  });
+  return totalPoints;
+};
