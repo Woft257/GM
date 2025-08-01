@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Shield,
@@ -8,15 +8,19 @@ import {
   Settings,
   BarChart3,
   Clock,
-  CheckCircle,
   Edit3,
-  Gift
+  Gift,
+  Download
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 import { useUsers } from '../hooks/useUsers';
 import { useGameStatus } from '../hooks/useGameStatus';
 import { physicalBooths } from '../data/booths';
-import { triggerGlobalReload } from '../lib/database';
+import { triggerGlobalReload, getAllQRTokens, getAllPendingScores } from '../lib/database';
+import { resetScoresAndBooths } from '../lib/gameControl'; // Import the new reset function
+import { User, QRToken, PendingScore } from '../types';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -174,6 +178,92 @@ const AdminDashboard: React.FC = () => {
               </div>
             </button>
 
+            {/* Export Data */}
+
+            {/* Export All Database Data */}
+            <button
+              onClick={async () => {
+                try {
+                  // Export Users
+                  if (users && users.length > 0) {
+                    const userHeaders = ['Username', 'MEXC UID', 'Total Score', 'Played Booths', 'Rewards Claimed', 'Created At'];
+                    const userDataRows = users.map((user: User) => [
+                      user.telegram,
+                      user.mexcUID || '',
+                      user.totalScore,
+                      user.playedBooths ? Object.keys(user.playedBooths).filter(boothId => user.playedBooths[boothId]).map(boothId => {
+                        const booth = physicalBooths.find(b => b.id === boothId);
+                        return booth ? booth.name : boothId;
+                      }).join(', ') : 'None',
+                      user.rewards ? Object.keys(user.rewards).filter(rewardId => user.rewards?.[rewardId]).join(', ') : 'None',
+                      user.createdAt ? user.createdAt.toLocaleString() : ''
+                    ]);
+                    const userWs = XLSX.utils.aoa_to_sheet([userHeaders, ...userDataRows]);
+                    const userCsv = XLSX.utils.sheet_to_csv(userWs);
+                    saveAs(new Blob([userCsv], { type: 'text/csv;charset=utf-8;' }), 'database_users.csv');
+                  } else {
+                    alert('Không có dữ liệu người chơi để xuất.');
+                  }
+
+                  // Export QR Tokens
+                  const qrTokens = await getAllQRTokens();
+                  if (qrTokens && qrTokens.length > 0) {
+                    const qrHeaders = ['ID', 'Booth ID', 'Points', 'Used', 'Created At', 'Used At', 'Used By', 'Expires At', 'Simple Code'];
+                    const qrDataRows = qrTokens.map((token: QRToken) => [
+                      token.id,
+                      token.boothId,
+                      token.points,
+                      token.used,
+                      token.createdAt ? token.createdAt.toLocaleString() : '',
+                      token.usedAt ? token.usedAt.toLocaleString() : '',
+                      token.usedBy || '',
+                      token.expiresAt ? token.expiresAt.toLocaleString() : '',
+                      token.simpleCode
+                    ]);
+                    const qrWs = XLSX.utils.aoa_to_sheet([qrHeaders, ...qrDataRows]);
+                    const qrCsv = XLSX.utils.sheet_to_csv(qrWs);
+                    saveAs(new Blob([qrCsv], { type: 'text/csv;charset=utf-8;' }), 'database_qr_tokens.csv');
+                  } else {
+                    alert('Không có dữ liệu QR token để xuất.');
+                  }
+
+                  // Export Pending Scores
+                  const pendingScores = await getAllPendingScores();
+                  if (pendingScores && pendingScores.length > 0) {
+                    const pendingHeaders = ['ID', 'Booth ID', 'Username', 'Timestamp', 'Status', 'Points', 'Created At', 'Completed At', 'Completed By'];
+                    const pendingDataRows = pendingScores.map((score: PendingScore) => [
+                      score.id,
+                      score.boothId,
+                      score.username,
+                      score.timestamp,
+                      score.status,
+                      score.points || '',
+                      score.createdAt ? score.createdAt.toLocaleString() : '',
+                      score.completedAt ? score.completedAt.toLocaleString() : '',
+                      score.completedBy || ''
+                    ]);
+                    const pendingWs = XLSX.utils.aoa_to_sheet([pendingHeaders, ...pendingDataRows]);
+                    const pendingCsv = XLSX.utils.sheet_to_csv(pendingWs);
+                    saveAs(new Blob([pendingCsv], { type: 'text/csv;charset=utf-8;' }), 'database_pending_scores.csv');
+                  } else {
+                    alert('Không có dữ liệu pending score để xuất.');
+                  }
+
+                  alert('Đã xuất tất cả dữ liệu database thành công!');
+                } catch (error) {
+                  console.error('Lỗi khi xuất dữ liệu database:', error);
+                  alert('Không thể xuất dữ liệu database. Vui lòng thử lại.');
+                }
+              }}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:from-indigo-800 active:to-purple-800 text-white p-2 sm:p-4 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-1 sm:space-x-3 touch-manipulation active:scale-95 min-h-[60px] sm:min-h-[80px]"
+            >
+              <Download className="h-4 w-4 sm:h-6 sm:w-6 flex-shrink-0" />
+              <div className="text-left min-w-0">
+                <div className="text-xs sm:text-base font-semibold">Xuất toàn bộ DB</div>
+                <div className="text-xs text-white/80 truncate hidden sm:block">Xuất tất cả dữ liệu database</div>
+              </div>
+            </button>
+
             {/* Global Reload */}
             <button
               onClick={async () => {
@@ -193,6 +283,30 @@ const AdminDashboard: React.FC = () => {
               <div className="text-left min-w-0">
                 <div className="text-xs sm:text-base font-semibold">Tải lại trang</div>
                 <div className="text-xs text-white/80 truncate hidden sm:block">Buộc tất cả người dùng tải lại</div>
+              </div>
+            </button>
+
+            {/* Reset Scores & Booths */}
+            <button
+              onClick={async () => {
+                if (window.confirm('Bạn có chắc chắn muốn ĐẶT LẠI ĐIỂM SỐ VÀ BOOTH của tất cả người dùng không? Hành động này không thể hoàn tác và chỉ ảnh hưởng đến điểm số và booth đã chơi, giữ nguyên tên người dùng và phần thưởng.')) {
+                  try {
+                    await resetScoresAndBooths();
+                    alert('Đã đặt lại điểm số và booth thành công cho tất cả người dùng!');
+                    // Optionally, refresh user data after reset
+                    window.location.reload(); 
+                  } catch (error) {
+                    console.error('Lỗi khi đặt lại điểm số và booth:', error);
+                    alert('Không thể đặt lại điểm số và booth. Vui lòng thử lại.');
+                  }
+                }
+              }}
+              className="bg-gradient-to-r from-purple-600 to-fuchsia-700 hover:from-purple-700 hover:to-fuchsia-800 active:from-purple-800 active:to-fuchsia-900 text-white p-2 sm:p-4 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-1 sm:space-x-3 touch-manipulation active:scale-95 min-h-[60px] sm:min-h-[80px]"
+            >
+              <Settings className="h-4 w-4 sm:h-6 sm:w-6 flex-shrink-0" />
+              <div className="text-left min-w-0">
+                <div className="text-xs sm:text-base font-semibold">Đặt lại điểm & Booth</div>
+                <div className="text-xs text-white/80 truncate hidden sm:block">Chỉ đặt lại điểm và booth</div>
               </div>
             </button>
           </div>

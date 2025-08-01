@@ -231,6 +231,50 @@ export const subscribeToUser = (
   });
 };
 
+// Get ALL QR Tokens
+export const getAllQRTokens = async (): Promise<QRToken[]> => {
+  const tokensRef = collection(db, QR_TOKENS_COLLECTION);
+  const q = query(tokensRef, orderBy('createdAt', 'desc'));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: data.id,
+      boothId: data.boothId,
+      points: data.points,
+      used: data.used,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      usedAt: data.usedAt?.toDate(),
+      usedBy: data.usedBy,
+      expiresAt: data.expiresAt?.toDate() || new Date(),
+      simpleCode: data.simpleCode || ''
+    };
+  });
+};
+
+// Get ALL Pending Scores
+export const getAllPendingScores = async (): Promise<PendingScore[]> => {
+  const pendingScoresRef = collection(db, PENDING_SCORES_COLLECTION);
+  const q = query(pendingScoresRef, orderBy('createdAt', 'desc'));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: data.id,
+      boothId: data.boothId,
+      username: data.username,
+      timestamp: data.timestamp,
+      status: data.status,
+      points: data.points,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      completedAt: data.completedAt?.toDate(),
+      completedBy: data.completedBy
+    };
+  });
+};
+
 // QR Token operations
 export interface QRToken {
   id: string;

@@ -8,6 +8,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { User } from '../types'; // Import User interface
 
 export type GameStatus = 'active' | 'ended';
 
@@ -78,7 +79,11 @@ export const getLastResetTimestamp = async (): Promise<number | null> => {
 // Check if local storage needs to be cleared based on reset timestamp
 export const checkAndClearLocalStorage = async (): Promise<boolean> => {
   try {
-    const lastResetTimestamp = await getLastResetTimestamp();
+    const resetRef = doc(db, GAME_CONTROL_COLLECTION, 'lastReset');
+    const resetDoc = await getDoc(resetRef);
+    const lastResetTimestamp = resetDoc.exists() ? resetDoc.data().timestamp : null;
+    const resetType = resetDoc.exists() ? resetDoc.data().resetBy : 'admin_full_reset'; // Default to full reset if not specified
+
     const userLoginTimestamp = localStorage.getItem('user_login_timestamp');
 
     if (lastResetTimestamp && userLoginTimestamp) {
@@ -86,15 +91,17 @@ export const checkAndClearLocalStorage = async (): Promise<boolean> => {
 
       // If database reset timestamp is newer than user's login timestamp, clear local storage
       if (lastResetTimestamp > userTimestamp) {
-        console.log('Clearing local storage due to game reset');
+        console.log(`Clearing local storage due to game reset (type: ${resetType})`);
 
-        // Clear all user-related local storage
-        localStorage.removeItem('telegram_username');
-        localStorage.removeItem('username');
+        // Always clear user_login_timestamp and session storage
         localStorage.removeItem('user_login_timestamp');
-
-        // Clear session storage as well
         sessionStorage.clear();
+
+        // Only clear telegram_username and username if it was a full reset
+        if (resetType === 'admin_full_reset') {
+          localStorage.removeItem('telegram_username');
+          localStorage.removeItem('username');
+        }
 
         return true; // Indicates that storage was cleared
       }
@@ -107,10 +114,27 @@ export const checkAndClearLocalStorage = async (): Promise<boolean> => {
   }
 };
 
-// Reset all game data
-export const resetAllData = async (): Promise<void> => {
+// Helper function to broadcast reset event
+const broadcastResetEvent = (timestamp: number) => {
+  localStorage.setItem('game_reset_timestamp', timestamp.toString());
+  sessionStorage.setItem('game_reset_timestamp', timestamp.toString());
+  window.dispatchEvent(new CustomEvent('gameReset', { 
+    detail: { timestamp: timestamp } 
+  }));
+  if (typeof BroadcastChannel !== 'undefined') {
+    const channel = new BroadcastChannel('game_reset');
+    channel.postMessage({ 
+      type: 'GAME_RESET', 
+      timestamp: timestamp 
+    });
+    channel.close();
+  }
+};
+
+// Reset only scores and booths for all users
+export const resetScoresAndBooths = async (): Promise<void> => {
   try {
-    console.log('Starting game reset...');
+    console.log('Starting score and booth reset...');
 
     // Store reset timestamp in database first
     const resetTimestamp = Date.now();
@@ -118,38 +142,79 @@ export const resetAllData = async (): Promise<void> => {
     await setDoc(resetRef, {
       timestamp: resetTimestamp,
       resetAt: serverTimestamp(),
-      resetBy: 'admin'
+      resetBy: 'admin_partial_reset'
     });
 
-    // First, explicitly clear pending scores using the dedicated function
-    console.log('Clearing pending scores with dedicated function...');
+    // Clear pending scores
+    console.log('Clearing pending scores...');
     await clearAllPendingScores();
 
+    // Clear QR tokens
+    console.log('Clearing QR tokens...');
+    await deleteCollection(QR_TOKENS_COLLECTION);
+
+    // Reset scores and playedBooths for all users
+    console.log('Resetting user scores and played booths...');
+    const usersRef = collection(db, USERS_COLLECTION);
+    const usersSnapshot = await getDocs(usersRef);
+    const batch = writeBatch(db);
+    let userUpdateCount = 0;
+
+    usersSnapshot.docs.forEach(userDoc => {
+      const userData = userDoc.data() as User;
+      // Only reset if they have scores or played booths
+      if (userData.totalScore > 0 || Object.keys(userData.playedBooths || {}).length > 0 || Object.keys(userData.scores || {}).length > 0) {
+        batch.update(userDoc.ref, {
+          totalScore: 0,
+          playedBooths: {},
+          scores: {}
+        });
+        userUpdateCount++;
+      }
+    });
+
+    if (userUpdateCount > 0) {
+      await batch.commit();
+      console.log(`Updated ${userUpdateCount} users.`);
+    } else {
+      console.log('No users needed score/booth reset.');
+    }
+
+    // Broadcast reset event
+    broadcastResetEvent(resetTimestamp);
+
+    console.log('Score and booth reset completed successfully');
+  } catch (error) {
+    console.error('Error resetting scores and booths:', error);
+    throw error;
+  }
+};
+
+// Reset all game data
+export const resetAllData = async (): Promise<void> => {
+  try {
+    console.log('Starting full game reset...');
+
+    // Store reset timestamp in database first
+    const resetTimestamp = Date.now();
+    const resetRef = doc(db, GAME_CONTROL_COLLECTION, 'lastReset');
+    await setDoc(resetRef, {
+      timestamp: resetTimestamp,
+      resetAt: serverTimestamp(),
+      resetBy: 'admin_full_reset'
+    });
+
     // Get all collections to delete
-    const collections = [
+    const collectionsToDelete = [
       USERS_COLLECTION,
       QR_TOKENS_COLLECTION,
       PENDING_SCORES_COLLECTION
     ];
 
     // Delete all documents in batches
-    for (const collectionName of collections) {
+    for (const collectionName of collectionsToDelete) {
       console.log(`Deleting collection: ${collectionName}`);
       await deleteCollection(collectionName);
-
-      // Wait a bit to ensure deletion is complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Verify deletion by checking if collection is empty
-      const verifyRef = collection(db, collectionName);
-      const verifySnapshot = await getDocs(verifyRef);
-      console.log(`Collection ${collectionName} has ${verifySnapshot.docs.length} documents remaining`);
-
-      // If still has documents, try one more time
-      if (verifySnapshot.docs.length > 0) {
-        console.log(`Retrying deletion for ${collectionName}...`);
-        await deleteCollection(collectionName);
-      }
     }
 
     // Reset game status to active
@@ -161,28 +226,10 @@ export const resetAllData = async (): Promise<void> => {
     localStorage.removeItem('admin_auth_timestamp');
     localStorage.removeItem('username'); // Also clear this key
 
-    // Broadcast reset event to all tabs/windows using multiple methods
-    localStorage.setItem('game_reset_timestamp', resetTimestamp.toString());
-    
-    // Also use sessionStorage to ensure cross-tab communication
-    sessionStorage.setItem('game_reset_timestamp', resetTimestamp.toString());
-    
-    // Dispatch custom event for immediate detection
-    window.dispatchEvent(new CustomEvent('gameReset', { 
-      detail: { timestamp: resetTimestamp } 
-    }));
+    // Broadcast reset event
+    broadcastResetEvent(resetTimestamp);
 
-    // Use BroadcastChannel for better cross-tab communication
-    if (typeof BroadcastChannel !== 'undefined') {
-      const channel = new BroadcastChannel('game_reset');
-      channel.postMessage({ 
-        type: 'GAME_RESET', 
-        timestamp: resetTimestamp 
-      });
-      channel.close();
-    }
-
-    console.log('Game reset completed successfully');
+    console.log('Full game reset completed successfully');
   } catch (error) {
     console.error('Error resetting game data:', error);
     throw error;
