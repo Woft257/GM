@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode, Html5QrcodeScanType } from 'html5-qrcode';
+import { Html5Qrcode, CameraDevice } from 'html5-qrcode'; // Import CameraDevice directly from html5-qrcode
 import { Camera, X, AlertCircle, CheckCircle } from 'lucide-react';
+
+// Removed the incorrect import for CameraDevice
 
 interface QRScannerProps {
   onScanSuccess: (data: string) => void;
@@ -13,6 +15,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string>('');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [availableCameras, setAvailableCameras] = useState<CameraDevice[]>([]); // Changed type to CameraDevice[]
+  const [selectedCameraId, setSelectedCameraId] = useState<string | undefined>(undefined);
 
 
   useEffect(() => {
@@ -46,12 +50,12 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     if (hasPermission === true && isOpen && !scannerRef.current) {
       // Ensure DOM is ready
       const timer = setTimeout(() => {
-        initializeScanner();
+        initializeScanner(selectedCameraId);
       }, 200);
 
       return () => clearTimeout(timer);
     }
-  }, [hasPermission, isOpen]);
+  }, [hasPermission, isOpen, selectedCameraId]); // Add selectedCameraId to dependencies
 
   const checkCameraPermission = async () => {
     try {
@@ -64,13 +68,13 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       stream.getTracks().forEach(track => track.stop());
       setHasPermission(true);
       // initializeScanner will be called by useEffect
-    } catch (err) {
-      console.log('Camera permission not granted yet');
+    } catch (error) { // Changed err to error
+      console.log('Camera permission not granted yet', error); // Log error
       setHasPermission(false);
     }
   };
 
-  const initializeScanner = async () => {
+  const initializeScanner = async (cameraIdToUse?: string) => {
     try {
       setError('');
 
@@ -78,8 +82,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       if (scannerRef.current) {
         try {
           await scannerRef.current.stop();
-        } catch (err) {
-          console.log('Error stopping scanner:', err);
+        } catch (error) { // Changed err to error
+          console.log('Error stopping scanner:', error); // Log error
         }
         scannerRef.current = null;
       }
@@ -89,7 +93,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       if (!element) {
         console.error('QR scanner container not found, waiting...');
         setTimeout(() => {
-          initializeScanner();
+          initializeScanner(cameraIdToUse);
         }, 500);
         return;
       }
@@ -105,22 +109,39 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       // Get camera devices
       const devices = await Html5Qrcode.getCameras();
       console.log('Available cameras:', devices);
+      setAvailableCameras(devices); // Store available cameras
 
-      // Prefer back camera
-      let cameraId = devices[0]?.id;
-      const backCamera = devices.find(device =>
-        device.label.toLowerCase().includes('back') ||
-        device.label.toLowerCase().includes('rear') ||
-        device.label.toLowerCase().includes('environment')
-      );
-      if (backCamera) {
-        cameraId = backCamera.id;
-        console.log('Using back camera:', backCamera.label);
+      let finalCameraId = cameraIdToUse;
+
+      if (!finalCameraId) {
+        // If no specific camera is selected, try to find a back camera or use the first one
+        const backCamera = devices.find(device =>
+          device.label.toLowerCase().includes('back') ||
+          device.label.toLowerCase().includes('rear') ||
+          device.label.toLowerCase().includes('environment')
+        );
+        if (backCamera) {
+          finalCameraId = backCamera.id;
+          console.log('Using back camera:', backCamera.label);
+        } else {
+          finalCameraId = devices[0]?.id; // Fallback to first camera
+        }
+      }
+
+      if (!finalCameraId) {
+        setError('Không tìm thấy camera nào.');
+        setIsScanning(false);
+        return;
+      }
+
+      // Set the selected camera ID if it's not already set
+      if (!selectedCameraId || selectedCameraId !== finalCameraId) {
+        setSelectedCameraId(finalCameraId);
       }
 
       // Start scanning
       await scannerRef.current.start(
-        cameraId,
+        finalCameraId,
         {
           fps: 5, // Giảm từ 10 xuống 5 để ít lỗi hơn
           qrbox: { width: 250, height: 250 },
@@ -145,10 +166,6 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
 
       console.log('Scanner started successfully');
       setIsScanning(true);
-
-
-
-      setIsScanning(true);
     } catch (err) {
       console.error('Scanner initialization error:', err);
       setError('Không thể khởi tạo scanner. Vui lòng thử lại.');
@@ -167,10 +184,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
     setIsScanning(false);
     setError('');
     setHasPermission(null);
+    setAvailableCameras([]); // Clear cameras on close
+    setSelectedCameraId(undefined); // Clear selected camera on close
     onClose();
   };
-
-
 
   const requestCameraPermission = async () => {
     try {
@@ -187,21 +204,28 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
       setHasPermission(true);
       // initializeScanner will be called by useEffect when hasPermission changes
 
-    } catch (err) {
-      console.error('Camera permission error:', err);
+    } catch (error) { // Changed err to error
+      console.error('Camera permission error:', error);
       setHasPermission(false);
 
-      const error = err as Error;
-      if (error.name === 'NotAllowedError') {
+      const err = error as Error; // Renamed error to err for consistency with original logic
+      if (err.name === 'NotAllowedError') {
         setError('Quyền camera bị từ chối. Vui lòng cho phép truy cập camera và tải lại trang.');
-      } else if (error.name === 'NotFoundError') {
+      } else if (err.name === 'NotFoundError') {
         setError('Không tìm thấy camera. Vui lòng kiểm tra thiết bị camera.');
-      } else if (error.name === 'NotReadableError') {
+      } else if (err.name === 'NotReadableError') {
         setError('Camera đang được sử dụng bởi ứng dụng khác. Vui lòng đóng các ứng dụng khác và thử lại.');
       } else {
         setError('Không thể truy cập camera. Vui lòng kiểm tra quyền camera trong cài đặt trình duyệt.');
       }
     }
+  };
+
+  const handleCameraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCameraId = event.target.value;
+    setSelectedCameraId(newCameraId);
+    // Re-initialize scanner with the new camera
+    initializeScanner(newCameraId);
   };
 
   if (!isOpen) return null;
@@ -294,6 +318,19 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onClose, isOpen })
               <img src="/mexc-gm-collaboration-logo.png" alt="MEXC x GM Vietnam" className="h-5 sm:h-6" />
             </div>
             <div className="flex items-center space-x-1 sm:space-x-2">
+              {availableCameras.length > 1 && hasPermission === true && (
+                <select
+                  onChange={handleCameraChange}
+                  value={selectedCameraId || ''}
+                  className="bg-gray-800 text-white text-xs sm:text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {availableCameras.map(camera => (
+                    <option key={camera.id} value={camera.id}>
+                      {camera.label || `Camera ${camera.id.substring(0, 4)}...`}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
               </div>
