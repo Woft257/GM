@@ -14,16 +14,14 @@ export const usePendingScores = (username: string | null = null) => {
     const q = username
       ? query(
           collection(db, PENDING_SCORES_COLLECTION),
-          where('username', '==', username),
-          where('status', '==', 'waiting')
+          where('username', '==', username)
         )
       : query(
-          collection(db, PENDING_SCORES_COLLECTION),
-          where('status', '==', 'waiting')
+          collection(db, PENDING_SCORES_COLLECTION)
         );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const scores = querySnapshot.docs.map(doc => {
+      const allScores = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: data.id,
@@ -37,7 +35,9 @@ export const usePendingScores = (username: string | null = null) => {
           completedBy: data.completedBy
         };
       });
-      setPendingScores(scores);
+      // Filter on client side to ensure 'waiting' status or missing status are included
+      const filteredScores = allScores.filter(score => score.status === 'waiting' || !score.status);
+      setPendingScores(filteredScores);
       setLoading(false);
     });
 
