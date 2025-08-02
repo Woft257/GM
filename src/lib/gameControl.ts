@@ -15,9 +15,14 @@ import { getAllUsers } from './database'; // Import getAllUsers
 export const BLACKLISTED_USERS: string[] = [
   '@Trongsanght', 
   '@Loc',
-  '@Loc',
-  '@Loc',
-  '@Loc',
+  '@toanleo',
+  '@Thuyminh',
+  '@Copv',
+  '@Lanhthu',
+  '@Thinh',
+  '@Bach300475',
+  '@0904772373',
+  '@youngcuncon'
   // Add more blacklisted usernames here
 ];
 
