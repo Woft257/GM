@@ -462,7 +462,12 @@ export const createPendingScore = async (boothId: string, username: string): Pro
   let user = await getUser(username);
   if (!user) {
     console.log(`User ${username} not found, creating new user.`);
-    user = await createUser(username);
+    try {
+      user = await createUser(username);
+    } catch (error) {
+      console.error(`Failed to create user ${username} for pending score:`, error);
+      throw new Error(`Không thể tạo người dùng mới: ${(error as Error).message}`);
+    }
   }
 
   // 2. Check if user already has pending score for this booth

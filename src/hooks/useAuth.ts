@@ -43,7 +43,7 @@ export const useAuth = () => {
       // Create user in Firebase if doesn't exist, and update MEXC UID
       await createUser(cleanUsername, userMexcUID);
 
-      // Save to localStorage with timestamp
+      // Save to localStorage with timestamp ONLY if user creation is successful
       localStorage.setItem('telegram_username', cleanUsername);
       localStorage.setItem('mexc_uid', userMexcUID);
       localStorage.setItem('user_login_timestamp', Date.now().toString());
@@ -52,17 +52,9 @@ export const useAuth = () => {
     } catch (error: unknown) {
       console.error('Error creating user:', error);
 
-      // If game ended, don't allow login
-      if (error instanceof Error && error.message?.includes('Sự kiện đã kết thúc')) {
-        throw error; // Re-throw to be handled by UI
-      }
-
-      // For other errors, fallback to localStorage only
-      localStorage.setItem('telegram_username', cleanUsername);
-      localStorage.setItem('mexc_uid', userMexcUID);
-      localStorage.setItem('user_login_timestamp', Date.now().toString());
-      setUsername(cleanUsername);
-      setMexcUID(userMexcUID);
+      // If user creation fails, do NOT update localStorage or state
+      // Re-throw the error to be handled by the UI (e.g., show an error message)
+      throw error;
     }
   };
 
