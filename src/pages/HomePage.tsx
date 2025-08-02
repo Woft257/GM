@@ -14,7 +14,7 @@ import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { usePendingScores } from '../hooks/usePendingScores';
 import { getBoothName, getMinigamesForBooth } from '../data/booths';
 import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye, Gift } from 'lucide-react';
-import { isQRScanningAllowed } from '../lib/gameControl';
+import { isQRScanningAllowed, getLuckyWinners, LuckyWinner } from '../lib/gameControl'; // Import lucky winner functions and type
 import { useGameStatus } from '../hooks/useGameStatus';
 
 const HomePage: React.FC = () => {
@@ -25,6 +25,21 @@ const HomePage: React.FC = () => {
   const { user, loading: userLoading } = useUser(username || '');
   const { pendingScores } = usePendingScores(username);
   const { gameStatus } = useGameStatus();
+  const [isLuckyWinner, setIsLuckyWinner] = useState(false); // New state for lucky winner status
+
+  // Check if current user is a lucky winner when game ends
+  useEffect(() => {
+    const checkLuckyWinner = async () => {
+      if (gameStatus === 'ended' && username) {
+        const winnersData = await getLuckyWinners();
+        if (winnersData && winnersData.winners) {
+          const found = winnersData.winners.some(winner => winner.telegram === username);
+          setIsLuckyWinner(found);
+        }
+      }
+    };
+    checkLuckyWinner();
+  }, [gameStatus, username]);
 
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scanResult, setScanResult] = useState<{
@@ -456,7 +471,16 @@ const HomePage: React.FC = () => {
                 <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
 
-              {userRank && userRank <= 5 ? (
+              {isLuckyWinner ? (
+                <>
+                  <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
+                    🎉 Chúc mừng! 🎉
+                  </h2>
+                  <p className="text-green-300 font-semibold mb-3 sm:mb-4 text-sm sm:text-base">
+                    Bạn đã nằm trong top may mắn vui lòng liên hệ admin tại các booth để nhận quà
+                  </p>
+                </>
+              ) : userRank && userRank <= 5 ? (
                 <>
                   <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
                     🎉 Chúc mừng! Bạn đứng thứ {userRank}! 🎉
@@ -649,6 +673,7 @@ const HomePage: React.FC = () => {
               <li><b>Top 10 may mắn hoàn thành 6 thử thách mỗi ngày:</b> Keychain + Áo thun + Quạt cầm tay</li>
               <li><b>Đổi quà bậc cao xuống thấp:</b> Nếu quà bậc cao hết, có thể nhận quà bậc thấp hơn không đổi ngược lại</li>
               <li><b>Công bố & Nhận thưởng:</b> Kết quả Top công bố trước 15:00 mỗi ngày. Người chơi phải có mặt để nhận thưởng tại booth Souvenir để nhận thưởng</li>
+              <li><b>Lưu ý:</b> MEXC toàn quyền quyết định cuối cùng vể kết quả của sự kiện</li>
             </ul>
           </div>
         )}

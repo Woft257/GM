@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X } from 'lucide-react';
+import { Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X, Crown, Medal, Award } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
 import { updateUserReward } from '../lib/database';
 import { User } from '../types';
+import { getLuckyWinners, LuckyWinner } from '../lib/gameControl';
 
 
 const RewardManagement: React.FC = () => {
@@ -12,6 +13,23 @@ const RewardManagement: React.FC = () => {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [luckyWinners, setLuckyWinners] = useState<LuckyWinner[]>([]);
+  const [luckyWinnersInfo, setLuckyWinnersInfo] = useState<{ selectedAt: Date | null; numberOfMinigamesCompleted: number; numberOfWinnersSelected: number } | null>(null);
+
+  useEffect(() => {
+    const fetchLuckyWinners = async () => {
+      const winnersData = await getLuckyWinners();
+      if (winnersData) {
+        setLuckyWinners(winnersData.winners);
+        setLuckyWinnersInfo({
+          selectedAt: winnersData.selectedAt,
+          numberOfMinigamesCompleted: winnersData.numberOfMinigamesCompleted,
+          numberOfWinnersSelected: winnersData.numberOfWinnersSelected,
+        });
+      }
+    };
+    fetchLuckyWinners();
+  }, []);
 
   const rewardMilestones = [
     { id: 'reward1', name: 'Phần thưởng 1', minGames: 1, maxGames: 2 },
@@ -81,6 +99,25 @@ const RewardManagement: React.FC = () => {
     }
   };
 
+  // Helper functions for rank icons and background
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1: return <Crown className="h-6 w-6 text-yellow-500" />;
+      case 2: return <Medal className="h-6 w-6 text-gray-400" />;
+      case 3: return <Award className="h-6 w-6 text-amber-600" />;
+      default: return null;
+    }
+  };
+
+  const getRankBg = (rank: number) => {
+    switch (rank) {
+      case 1: return 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-500/30';
+      case 2: return 'bg-gradient-to-r from-gray-400/20 to-slate-400/20 border-gray-400/30';
+      case 3: return 'bg-gradient-to-r from-amber-600/20 to-orange-500/20 border-amber-600/30';
+      default: return 'bg-white/5 border-white/10';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* MEXC-style Header */}
@@ -130,6 +167,44 @@ const RewardManagement: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Lucky Winners Section */}
+        {luckyWinners.length > 0 && (
+          <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">🎉 Người chơi may mắn! 🎉</h2>
+              {luckyWinnersInfo && (
+                <p className="text-white/70 text-sm">
+                  Đã chọn {luckyWinnersInfo.numberOfWinnersSelected} người chơi hoàn thành {luckyWinnersInfo.numberOfMinigamesCompleted} minigame vào {luckyWinnersInfo.selectedAt?.toLocaleString()}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {luckyWinners.map((winner, index) => (
+                <div
+                  key={winner.telegram}
+                  className={`p-6 rounded-xl border ${getRankBg(index + 1)} text-center`}
+                >
+                  <div className="flex justify-center mb-3">
+                    {index < 3 ? getRankIcon(index + 1) : (
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <span className="text-white/80 font-bold text-lg">#{index + 1}</span>
+                      </div>
+                    )}
+                  </div>
+                  {index < 3 && <h3 className="text-lg font-bold text-white mb-1">#{index + 1}</h3>}
+                  <p className="text-white/90 font-semibold mb-2">{winner.telegram}</p>
+                  {winner.mexcUID && (
+                    <p className="text-white/70 text-xs mb-2">MEXC UID: {winner.mexcUID}</p>
+                  )}
+                  <div className="text-2xl font-bold text-white">{winner.totalScore}</div>
+                  <p className="text-white/60 text-sm">điểm</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       {/* Notification */}
       {notification && (
@@ -197,8 +272,6 @@ const RewardManagement: React.FC = () => {
                 </div>
               </div>
             </div>
-
-
 
             {rewardMilestones.map((milestone) => {
               const eligibleUsers = getEligibleUsers(milestone.id);

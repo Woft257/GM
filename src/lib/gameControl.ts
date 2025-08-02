@@ -8,17 +8,27 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { User } from '../types'; // Import User type
+import { getAllUsers } from './database'; // Import getAllUsers
 
 // List of Telegram usernames to exclude from leaderboard and rewards
 export const BLACKLISTED_USERS: string[] = [
-  '@sd', 
+  '', 
   '@test'
   // Add more blacklisted usernames here
 ];
 
 export type GameStatus = 'active' | 'ended';
 
+// Define type for lucky winner
+export interface LuckyWinner {
+  telegram: string;
+  mexcUID?: string;
+  totalScore: number;
+}
+
 const GAME_STATUS_DOC = 'gameStatus';
+const LUCKY_WINNERS_DOC = 'luckyWinners'; // New document for lucky winners
 const GAME_CONTROL_COLLECTION = 'gameControl';
 
 // Collections to reset
@@ -63,6 +73,71 @@ export const setGameStatus = async (status: GameStatus): Promise<void> => {
 export const isGameActive = async (): Promise<boolean> => {
   const status = await getGameStatus();
   return status === 'active';
+};
+
+// Function to select and save lucky winners
+export const selectAndSaveLuckyWinners = async (numberOfMinigames: number = 6, numberOfWinners: number = 7): Promise<LuckyWinner[]> => {
+  try {
+    console.log('Selecting and saving lucky winners...');
+    const allUsers = await getAllUsers();
+
+    // Sort all users by totalScore to identify top users
+    const sortedAllUsers = [...allUsers].sort((a, b) => b.totalScore - a.totalScore);
+    const top5Users = sortedAllUsers.slice(0, 5).map(user => user.telegram);
+
+    // Filter users who have completed all minigames AND are not in the top 5
+    const eligibleUsers = allUsers.filter(user => {
+      const completedGamesCount = Object.keys(user.scores || {}).filter(key => user.scores![key] > 0).length;
+      return completedGamesCount === numberOfMinigames 
+             && !BLACKLISTED_USERS.includes(user.telegram)
+             && !top5Users.includes(user.telegram); // Exclude top 5 users
+    });
+
+    // Shuffle eligible users and select the top N
+    const shuffledUsers = eligibleUsers.sort(() => 0.5 - Math.random());
+    const luckyWinners: LuckyWinner[] = shuffledUsers.slice(0, numberOfWinners).map(user => ({
+      telegram: user.telegram,
+      mexcUID: user.mexcUID,
+      totalScore: user.totalScore,
+    }));
+
+    // Save lucky winners to Firestore
+    const winnersRef = doc(db, GAME_CONTROL_COLLECTION, LUCKY_WINNERS_DOC);
+    await setDoc(winnersRef, {
+      winners: luckyWinners,
+      selectedAt: serverTimestamp(),
+      numberOfMinigamesCompleted: numberOfMinigames,
+      numberOfWinnersSelected: numberOfWinners,
+    });
+
+    console.log(`Selected and saved ${luckyWinners.length} lucky winners.`);
+    return luckyWinners;
+  } catch (error) {
+    console.error('Error selecting and saving lucky winners:', error);
+    throw error;
+  }
+};
+
+// Function to get lucky winners
+export const getLuckyWinners = async (): Promise<{ winners: LuckyWinner[]; selectedAt: Date | null; numberOfMinigamesCompleted: number; numberOfWinnersSelected: number } | null> => {
+  try {
+    const winnersRef = doc(db, GAME_CONTROL_COLLECTION, LUCKY_WINNERS_DOC);
+    const winnersDoc = await getDoc(winnersRef);
+
+    if (winnersDoc.exists()) {
+      const data = winnersDoc.data();
+      return {
+        winners: data.winners || [],
+        selectedAt: data.selectedAt?.toDate() || null,
+        numberOfMinigamesCompleted: data.numberOfMinigamesCompleted || 0,
+        numberOfWinnersSelected: data.numberOfWinnersSelected || 0,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting lucky winners:', error);
+    return null;
+  }
 };
 
 // Get the last reset timestamp from database

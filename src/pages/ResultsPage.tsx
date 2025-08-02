@@ -1,15 +1,30 @@
-import React from 'react';
-import { Trophy, Users, Crown, Medal, Award, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trophy, Users, Crown, Medal, Award, ArrowLeft } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../hooks/useAuth';
 import { useGameStatus } from '../hooks/useGameStatus';
+import { getLuckyWinners, LuckyWinner } from '../lib/gameControl'; // Import lucky winner functions and type
 
 const ResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const { users, loading: usersLoading } = useUsers();
   const { username } = useAuth();
   const { gameStatus, loading } = useGameStatus();
+  const [isLuckyWinner, setIsLuckyWinner] = useState(false);
+
+  useEffect(() => {
+    const checkLuckyWinner = async () => {
+      if (gameStatus === 'ended' && username) {
+        const winnersData = await getLuckyWinners();
+        if (winnersData && winnersData.winners) {
+          const found = winnersData.winners.some(winner => winner.telegram === username);
+          setIsLuckyWinner(found);
+        }
+      }
+    };
+    checkLuckyWinner();
+  }, [gameStatus, username]);
 
   // Game ended state derived from gameStatus
   const gameEnded = gameStatus === 'ended';
@@ -162,7 +177,16 @@ const ResultsPage: React.FC = () => {
               <div className="text-center">
                 <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Kết quả của bạn</h2>
 
-                {currentUserRank && currentUserRank <= 5 ? (
+                {gameEnded && isLuckyWinner ? (
+                  <div className="mb-4 sm:mb-6">
+                    <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent mb-2">
+                      🎉 Chúc mừng! 🎉
+                    </div>
+                    <p className="text-green-300 font-semibold text-lg">
+                      Bạn đã nằm trong top may mắn vui lòng liên hệ admin tại các booth để nhận quà
+                    </p>
+                  </div>
+                ) : currentUserRank && currentUserRank <= 5 ? (
                   <div className="mb-4 sm:mb-6">
                     <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
                       #{currentUserRank}
