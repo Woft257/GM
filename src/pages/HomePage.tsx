@@ -674,7 +674,7 @@ const HomePage: React.FC = () => {
               <li><b>Top 10 may mắn hoàn thành 6 thử thách mỗi ngày:</b> Keychain + Áo thun + Quạt cầm tay</li>
               <li><b>Đổi quà bậc cao xuống thấp:</b> Nếu quà bậc cao hết, có thể nhận quà bậc thấp hơn không đổi ngược lại</li>
               <li><b>Công bố & Nhận thưởng:</b> Kết quả Top công bố trước 15:00 mỗi ngày. Người chơi phải có mặt để nhận thưởng tại booth Souvenir để nhận thưởng</li>
-              <li><b>Lưu ý:</b> MEXC toàn quyền quyết định cuối cùng vể kết quả của sự kiện</li>
+              <li><b>Lưu ý:</b> MEXC toàn quyền quyết định cuối cùng về kết quả của sự kiện</li>
             </ul>
           </div>
         )}
