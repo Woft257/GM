@@ -4,7 +4,7 @@ import { Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X, Crown, Medal,
 import { useUsers } from '../hooks/useUsers';
 import { updateUserReward } from '../lib/database';
 import { User } from '../types';
-import { getLuckyWinners, LuckyWinner } from '../lib/gameControl';
+import { getLuckyWinners } from '../lib/gameControl'; // Keep getLuckyWinners if needed elsewhere, but remove LuckyWinner type if not used
 
 
 const RewardManagement: React.FC = () => {
@@ -13,28 +13,13 @@ const RewardManagement: React.FC = () => {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [luckyWinners, setLuckyWinners] = useState<LuckyWinner[]>([]);
-  const [luckyWinnersInfo, setLuckyWinnersInfo] = useState<{ selectedAt: Date | null; numberOfMinigamesCompleted: number; numberOfWinnersSelected: number } | null>(null);
-
-  useEffect(() => {
-    const fetchLuckyWinners = async () => {
-      const winnersData = await getLuckyWinners();
-      if (winnersData) {
-        setLuckyWinners(winnersData.winners);
-        setLuckyWinnersInfo({
-          selectedAt: winnersData.selectedAt,
-          numberOfMinigamesCompleted: winnersData.numberOfMinigamesCompleted,
-          numberOfWinnersSelected: winnersData.numberOfWinnersSelected,
-        });
-      }
-    };
-    fetchLuckyWinners();
-  }, []);
+  // Removed luckyWinners and luckyWinnersInfo states as per user request
+  // Removed useEffect for fetching lucky winners as per user request
 
   const rewardMilestones = [
-    { id: 'reward1', name: 'Phần thưởng 1', minGames: 1, maxGames: 2 },
-    { id: 'reward2', name: 'Phần thưởng 2', minGames: 3, maxGames: 4 },
-    { id: 'reward3', name: 'Phần thưởng 3', minGames: 5, maxGames: 6 }
+    { id: 'reward1', name: 'Phần thưởng 1', minGames: 3, maxGames: 4 }, // Nón + Voucher Be
+    { id: 'reward2', name: 'Phần thưởng 2', minGames: 5, maxGames: 5 }, // Quạt
+    { id: 'reward3', name: 'Phần thưởng 3', minGames: 6, maxGames: 6 }  // Áo thun
   ];
 
   const getCompletedMinigames = (user: User) => {
@@ -55,6 +40,8 @@ const RewardManagement: React.FC = () => {
       const hasReward = user.rewards?.[rewardId] || false;
       const hasAnyReward = Object.values(user.rewards || {}).some(claimed => claimed);
 
+      // For eligibility to claim, check if completed minigames are >= minGames
+      // and if the user hasn't claimed this specific reward or any other reward yet.
       return completedMinigames >= milestone.minGames && !hasReward && !hasAnyReward;
     });
   };
@@ -69,19 +56,8 @@ const RewardManagement: React.FC = () => {
     try {
       setUpdatingUser(username);
 
-      if (claimed) {
-        // When claiming a reward, clear all other rewards for this user
-        const user = users.find(u => u.telegram === username);
-        if (user?.rewards) {
-          // Clear all existing rewards first
-          for (const existingRewardId of Object.keys(user.rewards)) {
-            if (existingRewardId !== rewardId && user.rewards[existingRewardId]) {
-              await updateUserReward(username, existingRewardId, false);
-            }
-          }
-        }
-      }
-
+      // The logic to clear other rewards is removed as per user feedback.
+      // The getEligibleUsers function already ensures a user can only claim one reward overall.
       await updateUserReward(username, rewardId, claimed);
 
       setNotification({
@@ -168,43 +144,7 @@ const RewardManagement: React.FC = () => {
           </div>
         </div>
 
-        {/* Lucky Winners Section */}
-        {luckyWinners.length > 0 && (
-          <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">🎉 Người chơi may mắn! 🎉</h2>
-              {luckyWinnersInfo && (
-                <p className="text-white/70 text-sm">
-                  Đã chọn {luckyWinnersInfo.numberOfWinnersSelected} người chơi hoàn thành {luckyWinnersInfo.numberOfMinigamesCompleted} minigame vào {luckyWinnersInfo.selectedAt?.toLocaleString()}
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {luckyWinners.map((winner, index) => (
-                <div
-                  key={winner.telegram}
-                  className={`p-6 rounded-xl border ${getRankBg(index + 1)} text-center`}
-                >
-                  <div className="flex justify-center mb-3">
-                    {index < 3 ? getRankIcon(index + 1) : (
-                      <div className="w-6 h-6 flex items-center justify-center">
-                        <span className="text-white/80 font-bold text-lg">#{index + 1}</span>
-                      </div>
-                    )}
-                  </div>
-                  {index < 3 && <h3 className="text-lg font-bold text-white mb-1">#{index + 1}</h3>}
-                  <p className="text-white/90 font-semibold mb-2">{winner.telegram}</p>
-                  {winner.mexcUID && (
-                    <p className="text-white/70 text-xs mb-2">MEXC UID: {winner.mexcUID}</p>
-                  )}
-                  <div className="text-2xl font-bold text-white">{winner.totalScore}</div>
-                  <p className="text-white/60 text-sm">điểm</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Lucky Winners Section - Removed as per user request */}
 
       {/* Notification */}
       {notification && (

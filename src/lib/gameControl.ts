@@ -13,8 +13,11 @@ import { getAllUsers } from './database'; // Import getAllUsers
 
 // List of Telegram usernames to exclude from leaderboard and rewards
 export const BLACKLISTED_USERS: string[] = [
-  '', 
-  '@test'
+  '@Trongsanght', 
+  '@Loc',
+  '@Loc',
+  '@Loc',
+  '@Loc',
   // Add more blacklisted usernames here
 ];
 
