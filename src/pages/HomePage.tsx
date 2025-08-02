@@ -456,13 +456,13 @@ const HomePage: React.FC = () => {
                 <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
 
-              {userRank && userRank <= 10 ? (
+              {userRank && userRank <= 5 ? (
                 <>
                   <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
                     🎉 Chúc mừng! Bạn đứng thứ {userRank}! 🎉
                   </h2>
                   <p className="text-yellow-300 font-semibold mb-3 sm:mb-4 text-sm sm:text-base">
-                    Bạn nằm trong Top 10 xuất sắc nhất!
+                    Bạn nằm trong Top 5 xuất sắc nhất!
                   </p>
                 </>
               ) : (

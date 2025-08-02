@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Trophy, Users, Star, Crown, Medal, Award, ArrowLeft } from 'lucide-react';
+import React from 'react';
+import { Trophy, Users, Crown, Medal, Award, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
 import { useUsers } from '../hooks/useUsers';
 import { useAuth } from '../hooks/useAuth';
 import { useGameStatus } from '../hooks/useGameStatus';
@@ -19,7 +18,7 @@ const ResultsPage: React.FC = () => {
   const sortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
   const currentUser = sortedUsers.find(u => u.telegram === username);
   const currentUserRank = currentUser ? sortedUsers.findIndex(u => u.telegram === username) + 1 : null;
-  const winners = sortedUsers.slice(0, 10); // Top 10
+  const winners = sortedUsers.slice(0, 5); // Top 5
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -30,14 +29,6 @@ const ResultsPage: React.FC = () => {
     }
   };
 
-  const getRankBg = (rank: number) => {
-    switch (rank) {
-      case 1: return 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-500/30';
-      case 2: return 'bg-gradient-to-r from-gray-400/20 to-slate-400/20 border-gray-400/30';
-      case 3: return 'bg-gradient-to-r from-amber-600/20 to-orange-500/20 border-amber-600/30';
-      default: return 'bg-white/5 border-white/10';
-    }
-  };
 
   if (loading || usersLoading) {
     return (
@@ -171,12 +162,12 @@ const ResultsPage: React.FC = () => {
               <div className="text-center">
                 <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Kết quả của bạn</h2>
 
-                {currentUserRank <= 10 ? (
+                {currentUserRank && currentUserRank <= 5 ? (
                   <div className="mb-4 sm:mb-6">
                     <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-2">
                       #{currentUserRank}
                     </div>
-                    <p className="text-yellow-300 font-semibold text-lg">🎉 Chúc mừng! Bạn nằm trong Top 10! 🎉</p>
+                    <p className="text-yellow-300 font-semibold text-lg">🎉 Chúc mừng! Bạn nằm trong Top 5! 🎉</p>
                   </div>
                 ) : (
                   <div className="mb-6">
@@ -204,11 +195,11 @@ const ResultsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Top 10 Winners */}
+        {/* Top 5 Winners */}
         {gameEnded && (
           <div className="bg-black/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-4 sm:p-6">
             <div className="text-center mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">🏆 Top 10 xuất sắc nhất</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">🏆 Top 5 xuất sắc nhất</h2>
               <p className="text-gray-300 text-sm sm:text-base">Những người chơi có thành tích cao nhất</p>
             </div>
 

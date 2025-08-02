@@ -9,6 +9,13 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// List of Telegram usernames to exclude from leaderboard and rewards
+export const BLACKLISTED_USERS: string[] = [
+  '@sd', 
+  '@test'
+  // Add more blacklisted usernames here
+];
+
 export type GameStatus = 'active' | 'ended';
 
 const GAME_STATUS_DOC = 'gameStatus';
