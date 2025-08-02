@@ -20,8 +20,10 @@ const BoothAllocationPage: React.FC = () => {
   
   // Memoize boothPendingScores to prevent unnecessary re-renders
   const boothPendingScores = React.useMemo(() => {
+    // Ensure boothId is treated as a string for comparison
+    const currentBoothId = boothId || ''; 
     return pendingScores
-      .filter(ps => ps.boothId === boothId)
+      .filter(ps => ps.boothId === currentBoothId)
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }, [pendingScores, boothId]);
 
@@ -148,12 +150,24 @@ const BoothAllocationPage: React.FC = () => {
       });
       setTimeout(() => setNotification(null), 3000);
 
+      // Re-fetch user details for the specific user to ensure scores are up-to-date
+      const updatedUser = await getUser(username);
+      if (updatedUser) {
+        setUserDetails(prev => ({
+          ...prev,
+          [username]: {
+            scores: updatedUser.scores || {},
+            mexcUID: updatedUser.mexcUID
+          }
+        }));
+      }
+
       // Clear the score input
       setScores(prev => ({
         ...prev,
         [username]: {
           ...prev[username],
-          [minigameId]: 0
+          [minigame.id]: 0
         }
       }));
     } catch (error: unknown) {

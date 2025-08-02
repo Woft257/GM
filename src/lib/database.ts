@@ -458,7 +458,14 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
 
 // PendingScore operations
 export const createPendingScore = async (boothId: string, username: string): Promise<string> => {
-  // Check if user already has pending score for this booth
+  // 1. Ensure user exists. If not, create them.
+  let user = await getUser(username);
+  if (!user) {
+    console.log(`User ${username} not found, creating new user.`);
+    user = await createUser(username);
+  }
+
+  // 2. Check if user already has pending score for this booth
   const existingQuery = query(
     collection(db, PENDING_SCORES_COLLECTION),
     where('boothId', '==', boothId),
