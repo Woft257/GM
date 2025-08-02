@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, Users, RotateCcw, AlertTriangle, Crown, Medal, Award } from 'lucide-react';
 
@@ -6,9 +6,15 @@ import { useUsers } from '../hooks/useUsers';
 import { useGameStatus } from '../hooks/useGameStatus';
 import {
   setGameStatus,
-  resetAllData
+  resetAllData,
+  selectAndSaveLuckyWinners, // Import the new function
+  getLuckyWinners, // Import to display winners
+  LuckyWinner // Import LuckyWinner type
 } from '../lib/gameControl';
 import { triggerGlobalReload } from '../lib/database';
+
+const NUMBER_OF_MINIGAMES = 6; // Define the total number of minigames
+const NUMBER_OF_LUCKY_WINNERS = 7; // Define the number of lucky winners
 
 const EndPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,11 +23,39 @@ const EndPage: React.FC = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [luckyWinners, setLuckyWinners] = useState<LuckyWinner[]>([]);
+  const [luckyWinnersInfo, setLuckyWinnersInfo] = useState<{ selectedAt: Date | null; numberOfMinigamesCompleted: number; numberOfWinnersSelected: number } | null>(null);
+
+  // Fetch lucky winners on component mount or game status change
+  useEffect(() => {
+    const fetchLuckyWinners = async () => {
+      if (gameStatus === 'ended') {
+        const winnersData = await getLuckyWinners();
+        if (winnersData) {
+          setLuckyWinners(winnersData.winners);
+          setLuckyWinnersInfo({
+            selectedAt: winnersData.selectedAt,
+            numberOfMinigamesCompleted: winnersData.numberOfMinigamesCompleted,
+            numberOfWinnersSelected: winnersData.numberOfWinnersSelected,
+          });
+        }
+      }
+    };
+    fetchLuckyWinners();
+  }, [gameStatus]);
 
   const handleEndGame = async () => {
     try {
       setActionLoading(true);
       await setGameStatus('ended');
+      // Select and save lucky winners after game ends
+      const selectedWinners = await selectAndSaveLuckyWinners(NUMBER_OF_MINIGAMES, NUMBER_OF_LUCKY_WINNERS);
+      setLuckyWinners(selectedWinners);
+      setLuckyWinnersInfo({
+        selectedAt: new Date(), // Use current date as it's just selected
+        numberOfMinigamesCompleted: NUMBER_OF_MINIGAMES,
+        numberOfWinnersSelected: NUMBER_OF_LUCKY_WINNERS,
+      });
     } catch (error) {
       console.error('Error ending game:', error);
       alert('Có lỗi khi kết thúc game');
@@ -64,9 +98,8 @@ const EndPage: React.FC = () => {
     }
   };
 
-  // Sort users by score for final ranking
+  // Sort users by score for general leaderboard display
   const sortedUsers = [...users].sort((a, b) => b.totalScore - a.totalScore);
-  const winners = sortedUsers.slice(0, 10); // Top 10
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -177,18 +210,22 @@ const EndPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Winners Section */}
-        {gameStatus === 'ended' && (
+        {/* Lucky Winners Section */}
+        {gameStatus === 'ended' && luckyWinners.length > 0 && (
           <div className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">🎉 Chúc mừng người thắng cuộc! 🎉</h2>
-              <p className="text-white/70">Top 10 người chơi xuất sắc nhất</p>
+              <h2 className="text-2xl font-bold text-white mb-2">🎉 Người chơi may mắn! 🎉</h2>
+              {luckyWinnersInfo && (
+                <p className="text-white/70 text-sm">
+                  Đã chọn {luckyWinnersInfo.numberOfWinnersSelected} người chơi hoàn thành {luckyWinnersInfo.numberOfMinigamesCompleted} minigame vào {luckyWinnersInfo.selectedAt?.toLocaleString()}
+                </p>
+              )}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {winners.map((user, index) => (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {luckyWinners.map((winner, index) => (
                 <div
-                  key={user.telegram}
+                  key={winner.telegram}
                   className={`p-6 rounded-xl border ${getRankBg(index + 1)} text-center`}
                 >
                   <div className="flex justify-center mb-3">
@@ -199,11 +236,11 @@ const EndPage: React.FC = () => {
                     )}
                   </div>
                   {index < 3 && <h3 className="text-lg font-bold text-white mb-1">#{index + 1}</h3>}
-                  <p className="text-white/90 font-semibold mb-2">{user.telegram}</p>
-                  {user.mexcUID && (
-                    <p className="text-white/70 text-xs mb-2">MEXC UID: {user.mexcUID}</p>
+                  <p className="text-white/90 font-semibold mb-2">{winner.telegram}</p>
+                  {winner.mexcUID && (
+                    <p className="text-white/70 text-xs mb-2">MEXC UID: {winner.mexcUID}</p>
                   )}
-                  <div className="text-2xl font-bold text-white">{user.totalScore}</div>
+                  <div className="text-2xl font-bold text-white">{winner.totalScore}</div>
                   <p className="text-white/60 text-sm">điểm</p>
                 </div>
               ))}

@@ -18,8 +18,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users, currentUser, loading }
     }
   };
 
-  // Memoize top 10 users to avoid unnecessary re-renders
-  const topUsers = useMemo(() => users.slice(0, 10), [users]);
+  // Memoize top 5 users to avoid unnecessary re-renders
+  const topUsers = useMemo(() => users.slice(0, 5), [users]);
 
   if (loading) {
     return (

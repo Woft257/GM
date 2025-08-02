@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X } from 'lucide-react';
+import { Gift, Users, CheckCircle, AlertCircle, Trophy, Search, X, Crown, Medal, Award } from 'lucide-react';
 import { useUsers } from '../hooks/useUsers';
 import { updateUserReward } from '../lib/database';
 import { User } from '../types';
+import { getLuckyWinners } from '../lib/gameControl'; // Keep getLuckyWinners if needed elsewhere, but remove LuckyWinner type if not used
 
 
 const RewardManagement: React.FC = () => {
@@ -12,11 +13,13 @@ const RewardManagement: React.FC = () => {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  // Removed luckyWinners and luckyWinnersInfo states as per user request
+  // Removed useEffect for fetching lucky winners as per user request
 
   const rewardMilestones = [
-    { id: 'reward1', name: 'Phần thưởng 1', minGames: 1, maxGames: 2 },
-    { id: 'reward2', name: 'Phần thưởng 2', minGames: 3, maxGames: 4 },
-    { id: 'reward3', name: 'Phần thưởng 3', minGames: 5, maxGames: 6 }
+    { id: 'reward1', name: 'Phần thưởng 1', minGames: 3, maxGames: 4 }, // Nón + Voucher Be
+    { id: 'reward2', name: 'Phần thưởng 2', minGames: 5, maxGames: 5 }, // Quạt
+    { id: 'reward3', name: 'Phần thưởng 3', minGames: 6, maxGames: 6 }  // Áo thun
   ];
 
   const getCompletedMinigames = (user: User) => {
@@ -37,6 +40,8 @@ const RewardManagement: React.FC = () => {
       const hasReward = user.rewards?.[rewardId] || false;
       const hasAnyReward = Object.values(user.rewards || {}).some(claimed => claimed);
 
+      // For eligibility to claim, check if completed minigames are >= minGames
+      // and if the user hasn't claimed this specific reward or any other reward yet.
       return completedMinigames >= milestone.minGames && !hasReward && !hasAnyReward;
     });
   };
@@ -51,19 +56,8 @@ const RewardManagement: React.FC = () => {
     try {
       setUpdatingUser(username);
 
-      if (claimed) {
-        // When claiming a reward, clear all other rewards for this user
-        const user = users.find(u => u.telegram === username);
-        if (user?.rewards) {
-          // Clear all existing rewards first
-          for (const existingRewardId of Object.keys(user.rewards)) {
-            if (existingRewardId !== rewardId && user.rewards[existingRewardId]) {
-              await updateUserReward(username, existingRewardId, false);
-            }
-          }
-        }
-      }
-
+      // The logic to clear other rewards is removed as per user feedback.
+      // The getEligibleUsers function already ensures a user can only claim one reward overall.
       await updateUserReward(username, rewardId, claimed);
 
       setNotification({
@@ -78,6 +72,25 @@ const RewardManagement: React.FC = () => {
       setTimeout(() => setNotification(null), 3000);
     } finally {
       setUpdatingUser(null);
+    }
+  };
+
+  // Helper functions for rank icons and background
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1: return <Crown className="h-6 w-6 text-yellow-500" />;
+      case 2: return <Medal className="h-6 w-6 text-gray-400" />;
+      case 3: return <Award className="h-6 w-6 text-amber-600" />;
+      default: return null;
+    }
+  };
+
+  const getRankBg = (rank: number) => {
+    switch (rank) {
+      case 1: return 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-500/30';
+      case 2: return 'bg-gradient-to-r from-gray-400/20 to-slate-400/20 border-gray-400/30';
+      case 3: return 'bg-gradient-to-r from-amber-600/20 to-orange-500/20 border-amber-600/30';
+      default: return 'bg-white/5 border-white/10';
     }
   };
 
@@ -130,6 +143,8 @@ const RewardManagement: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Lucky Winners Section - Removed as per user request */}
 
       {/* Notification */}
       {notification && (
@@ -197,8 +212,6 @@ const RewardManagement: React.FC = () => {
                 </div>
               </div>
             </div>
-
-
 
             {rewardMilestones.map((milestone) => {
               const eligibleUsers = getEligibleUsers(milestone.id);

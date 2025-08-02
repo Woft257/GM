@@ -14,7 +14,7 @@ import { parseBoothQRData, validateBoothQRData } from '../lib/boothQR';
 import { usePendingScores } from '../hooks/usePendingScores';
 import { getBoothName, getMinigamesForBooth } from '../data/booths';
 import { QrCode, CheckCircle, XCircle, Clock, Trophy, Eye, Gift } from 'lucide-react';
-import { isQRScanningAllowed } from '../lib/gameControl';
+import { isQRScanningAllowed, getLuckyWinners, LuckyWinner } from '../lib/gameControl'; // Import lucky winner functions and type
 import { useGameStatus } from '../hooks/useGameStatus';
 
 const HomePage: React.FC = () => {
@@ -25,6 +25,21 @@ const HomePage: React.FC = () => {
   const { user, loading: userLoading } = useUser(username || '');
   const { pendingScores } = usePendingScores(username);
   const { gameStatus } = useGameStatus();
+  const [isLuckyWinner, setIsLuckyWinner] = useState(false); // New state for lucky winner status
+
+  // Check if current user is a lucky winner when game ends
+  useEffect(() => {
+    const checkLuckyWinner = async () => {
+      if (gameStatus === 'ended' && username) {
+        const winnersData = await getLuckyWinners();
+        if (winnersData && winnersData.winners) {
+          const found = winnersData.winners.some(winner => winner.telegram === username);
+          setIsLuckyWinner(found);
+        }
+      }
+    };
+    checkLuckyWinner();
+  }, [gameStatus, username]);
 
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scanResult, setScanResult] = useState<{
@@ -456,13 +471,22 @@ const HomePage: React.FC = () => {
                 <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
 
-              {userRank && userRank <= 10 ? (
+              {isLuckyWinner ? (
+                <>
+                  <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
+                    🎉 Chúc mừng! 🎉
+                  </h2>
+                  <p className="text-green-300 font-semibold mb-3 sm:mb-4 text-sm sm:text-base">
+                    Bạn đã nằm trong top may mắn vui lòng liên hệ admin tại các booth để nhận quà
+                  </p>
+                </>
+              ) : userRank && userRank <= 5 ? (
                 <>
                   <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
                     🎉 Chúc mừng! Bạn đứng thứ {userRank}! 🎉
                   </h2>
                   <p className="text-yellow-300 font-semibold mb-3 sm:mb-4 text-sm sm:text-base">
-                    Bạn nằm trong Top 10 xuất sắc nhất!
+                    Bạn nằm trong Top 5 xuất sắc nhất!
                   </p>
                 </>
               ) : (
@@ -550,21 +574,22 @@ const HomePage: React.FC = () => {
                 const hasAnyReward = user.rewards && Object.values(user.rewards).some(claimed => claimed);
 
                 const rewards = [
-                  { name: 'Phần thưởng Đồng', icon: '🥉', color: 'from-amber-600 to-yellow-500', shadow: 'shadow-amber-500/20', minGames: 1, maxGames: 2, description: 'Keychain' },
-                  { name: 'Phần thưởng Bạc', icon: '🥈', color: 'from-gray-400 to-gray-300', shadow: 'shadow-gray-400/20', minGames: 3, maxGames: 4, description: 'Quạt cầm tay + Voucher Be' },
-                  { name: 'Phần thưởng Vàng', icon: '🥇', color: 'from-yellow-400 to-amber-300', shadow: 'shadow-yellow-400/20', minGames: 5, maxGames: 6, description: 'Áo thun + Voucher Be' }
+                  { name: 'Phần thưởng 1', icon: '🎁', color: 'from-blue-500 to-cyan-500', shadow: 'shadow-blue-500/20', minGames: 3, maxGames: 4, description: 'Nón + Voucher Be' },
+                  { name: 'Phần thưởng 2', icon: '🎁', color: 'from-purple-500 to-pink-500', shadow: 'shadow-purple-500/20', minGames: 5, maxGames: 5, description: 'Quạt' },
+                  { name: 'Phần thưởng 3', icon: '🎁', color: 'from-yellow-500 to-orange-500', shadow: 'shadow-yellow-500/20', minGames: 6, maxGames: 6, description: 'Áo thun' }
                 ];
 
                 return rewards.map((reward, index) => {
-                  const rewardKey = `reward${index + 1}`;
+                  const rewardKey = `reward${index + 1}`; // Assuming reward IDs are still reward1, reward2, reward3
                   const isClaimed = user.rewards && user.rewards[rewardKey];
-                  const isEligible = completedMinigames >= reward.minGames;
+                  // A reward is eligible for display if completed minigames are >= its minGames
+                  const isEligibleForDisplay = completedMinigames >= reward.minGames; 
 
                   return (
                     <div key={index} className={`relative overflow-hidden rounded-lg sm:rounded-xl border transition-all duration-300 ${
                       isClaimed
                         ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-400/40 shadow-lg shadow-green-500/10'
-                        : isEligible && !hasAnyReward
+                        : isEligibleForDisplay && !hasAnyReward // Only highlight if not claimed and no other reward claimed
                           ? 'bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-yellow-400/40 shadow-lg shadow-yellow-500/10'
                           : 'bg-gradient-to-r from-gray-800/40 to-gray-700/20 border-gray-600/20 opacity-60'
                     }`}>
@@ -572,17 +597,17 @@ const HomePage: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2 sm:space-x-4">
                             <div className={`w-8 h-8 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r ${
-                              isClaimed || (isEligible && !hasAnyReward) ? reward.color : 'from-gray-600 to-gray-500'
+                              isClaimed || isEligibleForDisplay ? reward.color : 'from-gray-600 to-gray-500'
                             } flex items-center justify-center ${
-                              isClaimed || (isEligible && !hasAnyReward) ? reward.shadow : 'shadow-gray-500/10'
+                              isClaimed || isEligibleForDisplay ? reward.shadow : 'shadow-gray-500/10'
                             } shadow-lg flex-shrink-0`}>
                               <span className={`text-sm sm:text-2xl ${
-                                isClaimed || (isEligible && !hasAnyReward) ? '' : 'grayscale opacity-60'
+                                isClaimed || isEligibleForDisplay ? '' : 'grayscale opacity-60'
                               }`}>{reward.icon}</span>
                             </div>
                             <div className="min-w-0 flex-1">
                               <h4 className={`text-sm sm:text-base font-semibold ${
-                                isClaimed || (isEligible && !hasAnyReward) ? 'text-white' : 'text-gray-500'
+                                isClaimed || isEligibleForDisplay ? 'text-white' : 'text-gray-500'
                               } truncate`}>{reward.name}</h4>
                               <p className="text-gray-400 text-sm">
                                 {reward.minGames === reward.maxGames
@@ -603,7 +628,7 @@ const HomePage: React.FC = () => {
                                 </div>
                                 <span className="text-green-400 text-sm font-medium hidden sm:inline">Đã nhận</span>
                               </div>
-                            ) : isEligible && !hasAnyReward ? (
+                            ) : isEligibleForDisplay && !hasAnyReward ? (
                               <div className="flex items-center space-x-1 sm:space-x-2">
                                 <div className="w-5 h-5 sm:w-7 sm:h-7 bg-yellow-500 rounded-full flex items-center justify-center animate-pulse">
                                   <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
@@ -623,7 +648,7 @@ const HomePage: React.FC = () => {
                       {isClaimed && (
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-400/5 to-transparent pointer-events-none"></div>
                       )}
-                      {isEligible && !isClaimed && !hasAnyReward && (
+                      {isEligibleForDisplay && !isClaimed && !hasAnyReward && (
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/5 to-transparent pointer-events-none"></div>
                       )}
                     </div>
@@ -649,6 +674,7 @@ const HomePage: React.FC = () => {
               <li><b>Top 10 may mắn hoàn thành 6 thử thách mỗi ngày:</b> Keychain + Áo thun + Quạt cầm tay</li>
               <li><b>Đổi quà bậc cao xuống thấp:</b> Nếu quà bậc cao hết, có thể nhận quà bậc thấp hơn không đổi ngược lại</li>
               <li><b>Công bố & Nhận thưởng:</b> Kết quả Top công bố trước 15:00 mỗi ngày. Người chơi phải có mặt để nhận thưởng tại booth Souvenir để nhận thưởng</li>
+              <li><b>Lưu ý:</b> MEXC toàn quyền quyết định cuối cùng vể kết quả của sự kiện</li>
             </ul>
           </div>
         )}

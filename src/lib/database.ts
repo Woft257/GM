@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, PendingScore } from '../types';
-import { isGameActive } from './gameControl';
+import { isGameActive, BLACKLISTED_USERS } from './gameControl';
 
 // Collections
 const USERS_COLLECTION = 'users';
@@ -189,18 +189,20 @@ export const subscribeToAllUsers = (
   const q = query(usersRef, orderBy('totalScore', 'desc')); // No limit
 
   return onSnapshot(q, (querySnapshot) => {
-    const users = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        telegram: data.telegram,
-        mexcUID: data.mexcUID || undefined,
-        totalScore: data.totalScore || 0,
-        playedBooths: data.playedBooths || {},
-        scores: data.scores || {},
-        rewards: data.rewards || {},
-        createdAt: data.createdAt?.toDate() || new Date()
-      };
-    });
+    const users = querySnapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          telegram: data.telegram,
+          mexcUID: data.mexcUID || undefined,
+          totalScore: data.totalScore || 0,
+          playedBooths: data.playedBooths || {},
+          scores: data.scores || {},
+          rewards: data.rewards || {},
+          createdAt: data.createdAt?.toDate() || new Date()
+        };
+      })
+      .filter(user => !BLACKLISTED_USERS.includes(user.telegram)); // Filter out blacklisted users
     callback(users);
   });
 };
